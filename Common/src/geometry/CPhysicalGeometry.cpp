@@ -112,7 +112,7 @@ CPhysicalGeometry::CPhysicalGeometry(CConfig *config, unsigned short val_iZone, 
 
   /*--- Loop over the points element to re-scale the mesh, and plot it (only SU2_CFD) ---*/
 
-  if (config->GetKind_SU2() == SU2_COMPONENT::SU2_CFD) {
+  if ((config->GetKind_SU2() == SU2_COMPONENT::SU2_CFD) || (config->GetKind_SU2() == SU2_COMPONENT::SU2_CFD_v750_8_308)) {
 
     /*--- The US system uses feet, but SU2 assumes that the grid is in inches ---*/
 

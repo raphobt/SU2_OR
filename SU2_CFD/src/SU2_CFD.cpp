@@ -26,6 +26,7 @@
  */
 
 #include "../include/SU2_CFD.hpp"
+#include "../include/fluid/CO2table.h"
 
 /* LIBXSMM include files, if supported. */
 #ifdef HAVE_LIBXSMM
@@ -38,6 +39,8 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
+
+  __grid_MOD_make_grid(); // Construct CO2 table used in fluid model
 
   char config_file_name[MAX_STRING_SIZE];
   bool dry_run = false;

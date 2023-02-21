@@ -29,6 +29,7 @@
 
 #include "../../../Common/include/geometry/CGeometry.hpp"
 #include "../../include/solvers/CSolver.hpp"
+#include "../../include/fluid/CSWTable.hpp"
 
 CFlowCompOutput::CFlowCompOutput(const CConfig *config, unsigned short nDim) : CFlowOutput(config, nDim, false) {
 
@@ -233,6 +234,23 @@ void CFlowCompOutput::SetVolumeOutputFields(CConfig *config){
   }
 
   // Primitive variables
+  
+  /* ---- */
+  AddVolumeOutput("VELOCITY-X",   "Velocity_x",                   "PRIMITIVE", "x-component of the velocity vector");
+  AddVolumeOutput("VELOCITY-Y",   "Velocity_y",                   "PRIMITIVE", "y-component of the velocity vector");
+  if (nDim == 3)
+    AddVolumeOutput("VELOCITY-Z",  "Velocity_z",                  "PRIMITIVE", "z-component of the velocity vector");
+  AddVolumeOutput("QUALITY",       "Quality",                     "PRIMITIVE", "Quality");
+  AddVolumeOutput("ENTROPY",       "Entropy",                     "PRIMITIVE", "Entropy");
+  AddVolumeOutput("THERMAL_CONDUCTIVITY", "Thermal_Conductivity", "PRIMITIVE", "Thermal conductivity");
+  AddVolumeOutput("CP", "Cp",                                     "PRIMITIVE", "Specific heat capacity at constant pressure");
+  AddVolumeOutput("TOTAL_PRESSURE", "Total_pressure",             "PRIMITIVE", "Total pressure");
+  AddVolumeOutput("TOTAL_TEMPERATURE", "Total_temperature",       "PRIMITIVE", "Total temperature");
+  //AddVolumeOutput("ENTHALPY",     "Enthalpy",                   "PRIMITIVE", "Specific enthalpy");
+  AddVolumeOutput("TOTAL_ENTHALPY", "Total_enthalpy",             "PRIMITIVE", "Specific total enthalpy");
+  AddVolumeOutput("SOUND_SPEED",    "Sound_speed",                "PRIMITIVE", "Sound speed");
+  /* ---- */
+  
   AddVolumeOutput("PRESSURE",    "Pressure",                "PRIMITIVE", "Pressure");
   AddVolumeOutput("TEMPERATURE", "Temperature",             "PRIMITIVE", "Temperature");
   AddVolumeOutput("MACH",        "Mach",                    "PRIMITIVE", "Mach number");
@@ -312,6 +330,113 @@ void CFlowCompOutput::LoadVolumeData(CConfig *config, CGeometry *geometry, CSolv
   SetVolumeOutputValue("PRESSURE", iPoint, Node_Flow->GetPressure(iPoint));
   SetVolumeOutputValue("TEMPERATURE", iPoint, Node_Flow->GetTemperature(iPoint));
   SetVolumeOutputValue("MACH", iPoint, sqrt(Node_Flow->GetVelocity2(iPoint))/Node_Flow->GetSoundSpeed(iPoint));
+    
+  /* ---- */
+ 
+  // sound speed and Mach ok computed from SoundSeed2 computed in CSWTable.cpp
+  SetVolumeOutputValue("SOUND_SPEED", iPoint, Node_Flow->GetSoundSpeed(iPoint));
+
+  // velocity 
+  SetVolumeOutputValue("VELOCITY-X", iPoint, Node_Flow->GetSolution(iPoint, 1)/Node_Flow->GetSolution(iPoint, 0));
+  SetVolumeOutputValue("VELOCITY-Y", iPoint, Node_Flow->GetSolution(iPoint, 2)/Node_Flow->GetSolution(iPoint, 0));
+  if (nDim == 3)
+    SetVolumeOutputValue("VELOCITY-Z", iPoint, Node_Flow->GetSolution(iPoint, 3)/Node_Flow->GetSolution(iPoint, 0));
+ 
+  // quality 
+  int flag;
+  double pp, TT, cc, ss, x_out, a_out, cp_out, vp_out, lambda_out, dummy;
+  double Eref_SW=506779.92063833564;
+  double Sref_SW=2739.05;
+  su2double vv = 1.0/Node_Flow->GetSolution(iPoint, 0);
+  su2double ee;
+  if (nDim == 3){
+  ee = Node_Flow->GetSolution(iPoint, 4)*vv - Eref_SW - Node_Flow->GetVelocity2(iPoint)/2.0; // internal energy
+  } else {
+  ee = Node_Flow->GetSolution(iPoint, 3)*vv - Eref_SW - Node_Flow->GetVelocity2(iPoint)/2.0;
+  }
+  __interp_table_MOD_co2bllt_equi(&pp,&TT,&cc,&x_out,&a_out,&dummy,&ee,&vv,&flag);
+  SetVolumeOutputValue("QUALITY", iPoint, x_out);
+
+  // thermal cond
+  __transprop_MOD_co2conduc2phase(&lambda_out, &vv, &dummy, &x_out, &TT, &pp, &flag);
+  SetVolumeOutputValue("THERMAL_CONDUCTIVITY", iPoint, lambda_out);
+
+  // Cp
+  __transprop_MOD_cpco2(&cp_out, &vv, &dummy, &x_out, &TT, &pp, &flag);
+  SetVolumeOutputValue("CP", iPoint, cp_out);
+
+  // entropy
+  __transprop_MOD_entropyco2(&ss, &vv, &dummy, &x_out, &TT, &pp, &flag);
+  SetVolumeOutputValue("ENTROPY", iPoint, ss+Sref_SW);
+
+  // total enthalpy & total pressure & total temperature 
+  int MODE=5;
+  su2double h=Node_Flow->GetSolution(iPoint, 4)*vv+pp*vv;
+  double resnorm, guess_1, guess_2;
+  su2double T_out, v_out, energy, hh;
+  int Niter, exitflag;
+
+  SetVolumeOutputValue("TOTAL_ENTHALPY", iPoint, h);
+
+  hh=h-Eref_SW;
+  //ss=s-Sref_SW;
+
+  /* OP1 8 MPa - 308 K */
+  //guess_1=308.0;
+  //guess_2=1.0/436.24;
+  /* OP2 8 MPa - 318 K */
+  //guess_1=318.0;
+  //guess_2=1.0/241.86;
+  /* OP3 10 MPa - 308 K */
+  //guess_1=308.0;
+  //guess_2=1.0/714.84;
+  /* OP4 10 MPa - 318 K */
+  //guess_1=318.0;
+  //guess_2=1.0/502.56;
+  /* OP6 9 MPa - 310 K */
+  //guess_1=310.0;
+  //guess_2=1.0/614.87;
+  /* case 4 Lettieri 8 MPa - 311 K */
+  guess_1=311.0;
+  guess_2=1.0/306.7;
+  
+  __non_linear_solvers_MOD_new_rap2d(&MODE, &T_out, &v_out, &resnorm, &Niter, &exitflag,&hh, &ss, &guess_1, &guess_2);
+  if (Niter>=500 || T_out!=T_out || v_out!=v_out || v_out<=0.0 || T_out<=100.0){
+  for(int i=1;i<20; i++){
+    guess_2=guess_2/1.1;
+    __non_linear_solvers_MOD_new_rap2d(&MODE, &T_out, &v_out, &resnorm, &Niter, &exitflag,&hh, &ss, &guess_1, &guess_2);
+    if (Niter<500 & T_out==T_out & v_out==v_out & v_out>0.0 & T_out>100.0){
+        break;
+    }
+  }
+  }
+  if (Niter>=500 ){
+  cout << "Max iteration reached in SetTDState_hs" << endl;
+  }
+  if (T_out!=T_out){
+  cout << "NAN T in SetTDState_hs" << endl;
+  }
+  if (v_out!=v_out){
+  cout << "NAN v in SetTDState_hs" << endl;
+  }
+  if (v_out<=0.0){
+  cout << "Negative v in SetTDState_hs : v = " << v_out << endl;
+  }
+  if (T_out<=100.0){
+  cout << "Too low T in SetTDState_hs : T = " << T_out << endl;
+  }
+
+  __properties_MOD_inter_energy(&T_out, &v_out, &energy);
+  if (energy!=energy){
+  cout << "NAN e in SetTDState_hs" << endl;
+  }
+  
+  __interp_table_MOD_co2bllt_equi(&pp,&TT,&cc,&x_out,&a_out,&dummy,&energy,&v_out,&flag);
+
+  SetVolumeOutputValue("TOTAL_PRESSURE", iPoint, pp);
+  SetVolumeOutputValue("TOTAL_TEMPERATURE", iPoint, TT);
+
+/* ---- */
 
   const su2double factor = solver[FLOW_SOL]->GetReferenceDynamicPressure();
   SetVolumeOutputValue("PRESSURE_COEFF", iPoint, (Node_Flow->GetPressure(iPoint) - solver[FLOW_SOL]->GetPressure_Inf())/factor);

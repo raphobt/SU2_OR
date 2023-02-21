@@ -32,6 +32,7 @@
 #include "../../include/fluid/CIdealGas.hpp"
 #include "../../include/fluid/CVanDerWaalsGas.hpp"
 #include "../../include/fluid/CPengRobinson.hpp"
+#include "../../include/fluid/CSWTable.hpp"
 #include "../../include/fluid/CCoolProp.hpp"
 #include "../../include/numerics_simd/CNumericsSIMD.hpp"
 #include "../../include/limiters/CLimiterDetails.hpp"
@@ -858,6 +859,10 @@ void CEulerSolver::SetNondimensionalization(CConfig *config, unsigned short iMes
       auxFluidModel = new CPengRobinson(Gamma, config->GetGas_Constant(), config->GetPressure_Critical(),
                                         config->GetTemperature_Critical(), config->GetAcentric_Factor());
       break;
+    case SW_TABLE:
+
+      auxFluidModel = new CSWTable();
+      break;
     case COOLPROP:
 
       auxFluidModel = new CCoolProp(config->GetFluid_Name());
@@ -1090,6 +1095,10 @@ void CEulerSolver::SetNondimensionalization(CConfig *config, unsigned short iMes
                                                config->GetAcentric_Factor());
         break;
 
+      case SW_TABLE:
+        FluidModel[thread] = new CSWTable();
+        break;
+
       case COOLPROP:
         FluidModel[thread] = new CCoolProp(config->GetFluid_Name());
         break;
@@ -1267,12 +1276,15 @@ void CEulerSolver::SetNondimensionalization(CConfig *config, unsigned short iMes
     case PR_GAS:
       ModelTable << "PR_GAS";
       break;
+    case SW_TABLE:
+      ModelTable << "SW_TABLE";
+      break;
     case COOLPROP:
       ModelTable << "CoolProp library";
       break;
     }
 
-    if (config->GetKind_FluidModel() == VW_GAS || config->GetKind_FluidModel() == PR_GAS){
+    if (config->GetKind_FluidModel() == VW_GAS || config->GetKind_FluidModel() == PR_GAS || config->GetKind_FluidModel() == SW_TABLE){
         NonDimTable << "Critical Pressure" << config->GetPressure_Critical() << config->GetPressure_Ref() << Unit.str() << config->GetPressure_Critical() /config->GetPressure_Ref();
         Unit.str("");
         Unit << "K";

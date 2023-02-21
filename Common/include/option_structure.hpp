@@ -64,6 +64,7 @@ using MapType = CEmptyMap<T,U>;
  */
 enum class SU2_COMPONENT {
   SU2_CFD, /*!< \brief Running the SU2_CFD software. */
+  SU2_CFD_v750_8_308, /*!< \brief Running the SU2_CFD software. */
   SU2_DEF, /*!< \brief Running the SU2_DEF software. */
   SU2_DOT, /*!< \brief Running the SU2_DOT software. */
   SU2_GEO, /*!< \brief Running the SU2_GEO software. */
@@ -570,6 +571,7 @@ enum ENUM_FLUIDMODEL {
   SU2_NONEQ = 8,          /*!< \brief User defined gas model for nonequilibrium flow. */
   FLUID_MIXTURE = 9,      /*!< \brief Species mixture model. */
   COOLPROP = 10,          /*!< \brief Thermodynamics library. */
+  SW_TABLE = 11,          /*!< \brief Thermodynamics library. */
 };
 static const MapType<std::string, ENUM_FLUIDMODEL> FluidModel_Map = {
   MakePair("STANDARD_AIR", STANDARD_AIR)
@@ -583,6 +585,7 @@ static const MapType<std::string, ENUM_FLUIDMODEL> FluidModel_Map = {
   MakePair("SU2_NONEQ", SU2_NONEQ)
   MakePair("FLUID_MIXTURE", FLUID_MIXTURE)
   MakePair("COOLPROP", COOLPROP)
+  MakePair("SW_TABLE", SW_TABLE)
 };
 
 /*!

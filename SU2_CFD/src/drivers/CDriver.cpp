@@ -569,7 +569,7 @@ void CDriver::Input_Preprocessing(CConfig **&config, CConfig *&driver_config) {
   char zone_file_name[MAX_STRING_SIZE];
 
   /*--- Initialize the configuration of the driver ---*/
-
+  
   driver_config = new CConfig(config_file_name, SU2_COMPONENT::SU2_CFD, false);
 
   for (iZone = 0; iZone < nZone; iZone++) {

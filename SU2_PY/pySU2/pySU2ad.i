@@ -75,6 +75,7 @@ namespace std {
  */
 enum class SU2_COMPONENT {
   SU2_CFD, /*!< \brief Running the SU2_CFD software. */
+  SU2_CFD_v750_8_308, /*!< \brief Running the SU2_CFD software. */
   SU2_DEF, /*!< \brief Running the SU2_DEF software. */
   SU2_DOT, /*!< \brief Running the SU2_DOT software. */
   SU2_GEO, /*!< \brief Running the SU2_GEO software. */

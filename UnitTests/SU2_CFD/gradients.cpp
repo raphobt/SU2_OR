@@ -64,7 +64,15 @@ struct GradientTestBase {
     auto origBuf = cout.rdbuf();
     cout.rdbuf(nullptr);
     stringstream ss(configOptions);
+    /*config = std::unique_ptr<CConfig>(new CConfig(ss, SU2_COMPONENT::SU2_CFD, false));*/
+    if (config->GetKind_SU2() == SU2_COMPONENT::SU2_CFD)
+    {
     config = std::unique_ptr<CConfig>(new CConfig(ss, SU2_COMPONENT::SU2_CFD, false));
+    }
+    else if (config->GetKind_SU2() == SU2_COMPONENT::SU2_CFD_v750_8_308)
+    {
+    config = std::unique_ptr<CConfig>(new CConfig(ss, SU2_COMPONENT::SU2_CFD_v750_8_308, false));
+    }
     cout.rdbuf(origBuf);
   }
 

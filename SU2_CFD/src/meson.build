@@ -7,6 +7,7 @@ su2_cfd_src += files(['fluid/CFluidModel.cpp',
                       'fluid/CIdealGas.cpp',
                       'fluid/CFluidScalar.cpp',
                       'fluid/CPengRobinson.cpp',
+                      'fluid/CSWTable.cpp',
                       'fluid/CVanDerWaalsGas.cpp',
                       'fluid/CCoolProp.cpp',
                       'fluid/CNEMOGas.cpp',
@@ -190,6 +191,7 @@ su2_cfd_src += files(['iteration/CIteration.cpp',
 su2_cfd_src += files(['limiters/CLimiterDetails.cpp'])
 
 if get_option('enable-normal')
+  su2_deps += declare_dependency(link_args:['-L/home/p/poncet/oberti/SU2/CO2_SU2','-lco2lib','-lopenblas','-lgfortran'])
   su2_cfd_lib = static_library('SU2core',
                                su2_cfd_src,
                                install : false,

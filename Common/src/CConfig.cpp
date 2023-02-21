@@ -3238,6 +3238,7 @@ void CConfig::SetHeader(SU2_COMPONENT val_software) const{
     cout << "|   \\__ \\ |_| |/ /                                                      |" << endl;
     switch (val_software) {
     case SU2_COMPONENT::SU2_CFD: cout << "|   |___/\\___//___|   Suite (Computational Fluid Dynamics Code)         |" << endl; break;
+    case SU2_COMPONENT::SU2_CFD_v750_8_308: cout << "|   |___/\\___//___|   Suite (Computational Fluid Dynamics Code)         |" << endl; break;
     case SU2_COMPONENT::SU2_DEF: cout << "|   |___/\\___//___|   Suite (Mesh Deformation Code)                     |" << endl; break;
     case SU2_COMPONENT::SU2_DOT: cout << "|   |___/\\___//___|   Suite (Gradient Projection Code)                  |" << endl; break;
     case SU2_COMPONENT::SU2_GEO: cout << "|   |___/\\___//___|   Suite (Geometry Definition Code)                  |" << endl; break;
@@ -3752,7 +3753,7 @@ void CConfig::SetPostprocessing(SU2_COMPONENT val_software, unsigned short val_i
     Kind_Regime = ENUM_REGIME::NO_FLOW;
   }
 
-  if ((rank == MASTER_NODE) && ContinuousAdjoint && (Ref_NonDim == DIMENSIONAL) && (Kind_SU2 == SU2_COMPONENT::SU2_CFD)) {
+  if ((rank == MASTER_NODE) && ContinuousAdjoint && (Ref_NonDim == DIMENSIONAL) && ((Kind_SU2 == SU2_COMPONENT::SU2_CFD) || (Kind_SU2 == SU2_COMPONENT::SU2_CFD_v750_8_308))) {
     cout << "WARNING: The adjoint solver should use a non-dimensional flow solution." << endl;
   }
 
@@ -4021,7 +4022,7 @@ void CConfig::SetPostprocessing(SU2_COMPONENT val_software, unsigned short val_i
    there is no grid motion ---*/
 
   if (GetGrid_Movement()){
-    if ((Kind_SU2 == SU2_COMPONENT::SU2_CFD || Kind_SU2 == SU2_COMPONENT::SU2_SOL) &&
+    if ((Kind_SU2 == SU2_COMPONENT::SU2_CFD || Kind_SU2 == SU2_COMPONENT::SU2_CFD_v750_8_308 || Kind_SU2 == SU2_COMPONENT::SU2_SOL) &&
         (TimeMarching == TIME_MARCHING::STEADY && !Time_Domain)){
 
       if((Kind_GridMovement != ROTATING_FRAME) &&
@@ -4683,7 +4684,7 @@ void CConfig::SetPostprocessing(SU2_COMPONENT val_software, unsigned short val_i
     Electric_Field_Dir = new su2double[2]; Electric_Field_Dir[0] = 0.0;  Electric_Field_Dir[1] = 1.0;
   }
 
-  if ((Kind_SU2 == SU2_COMPONENT::SU2_CFD) && (Kind_Solver == MAIN_SOLVER::NONE)) {
+  if (((Kind_SU2 == SU2_COMPONENT::SU2_CFD) || (Kind_SU2 == SU2_COMPONENT::SU2_CFD_v750_8_308)) && (Kind_Solver == MAIN_SOLVER::NONE)) {
     SU2_MPI::Error("PHYSICAL_PROBLEM must be set in the configuration file", CURRENT_FUNCTION);
   }
 
@@ -4725,7 +4726,7 @@ void CConfig::SetPostprocessing(SU2_COMPONENT val_software, unsigned short val_i
   /*--- Re-scale the length based parameters. The US system uses feet,
    but SU2 assumes that the grid is in inches ---*/
 
-  if ((SystemMeasurements == US) && (Kind_SU2 == SU2_COMPONENT::SU2_CFD)) {
+  if ((SystemMeasurements == US) && ((Kind_SU2 == SU2_COMPONENT::SU2_CFD) || (Kind_SU2 == SU2_COMPONENT::SU2_CFD_v750_8_308))) {
 
     for (iMarker = 0; iMarker < nMarker_Monitoring; iMarker++) {
       RefOriginMoment_X[iMarker] = RefOriginMoment_X[iMarker]/12.0;
@@ -4773,7 +4774,7 @@ void CConfig::SetPostprocessing(SU2_COMPONENT val_software, unsigned short val_i
 
   if (DirectDiff != NO_DERIVATIVE) {
 #ifndef CODI_FORWARD_TYPE
-    if (Kind_SU2 == SU2_COMPONENT::SU2_CFD) {
+    if ((Kind_SU2 == SU2_COMPONENT::SU2_CFD) || (Kind_SU2 == SU2_COMPONENT::SU2_CFD_v750_8_308)) {
       SU2_MPI::Error("SU2_CFD: Config option DIRECT_DIFF= YES requires AD support.\n"
                      "Please use SU2_CFD_DIRECTDIFF (meson.py ... -Denable-directdiff=true ...).",
                      CURRENT_FUNCTION);
@@ -5197,7 +5198,7 @@ void CConfig::SetPostprocessing(SU2_COMPONENT val_software, unsigned short val_i
 
   if (DiscreteAdjoint) {
 #if !defined CODI_REVERSE_TYPE
-    if (Kind_SU2 == SU2_COMPONENT::SU2_CFD) {
+    if ((Kind_SU2 == SU2_COMPONENT::SU2_CFD) || (Kind_SU2 == SU2_COMPONENT::SU2_CFD_v750_8_308)) {
       SU2_MPI::Error(string("SU2_CFD: Config option MATH_PROBLEM= DISCRETE_ADJOINT requires AD support!\n") +
                      string("Please use SU2_CFD_AD (configuration/compilation is done using the preconfigure.py script)."),
                      CURRENT_FUNCTION);
@@ -6016,7 +6017,7 @@ void CConfig::SetOutput(SU2_COMPONENT val_software, unsigned short val_izone) {
   bool fea = ((Kind_Solver == MAIN_SOLVER::FEM_ELASTICITY) || (Kind_Solver == MAIN_SOLVER::DISC_ADJ_FEM));
 
   cout << endl <<"----------------- Physical Case Definition ( Zone "  << iZone << " ) -------------------" << endl;
-  if (val_software == SU2_COMPONENT::SU2_CFD) {
+  if ((val_software == SU2_COMPONENT::SU2_CFD) || (val_software == SU2_COMPONENT::SU2_CFD_v750_8_308)) {
     if (FSI_Problem)
      cout << "Fluid-Structure Interaction." << endl;
 
@@ -6552,7 +6553,7 @@ void CConfig::SetOutput(SU2_COMPONENT val_software, unsigned short val_izone) {
     }
   }
 
-  if (((val_software == SU2_COMPONENT::SU2_CFD) && ( ContinuousAdjoint || DiscreteAdjoint)) || (val_software == SU2_COMPONENT::SU2_DOT)) {
+  if (( ((val_software == SU2_COMPONENT::SU2_CFD) || (val_software == SU2_COMPONENT::SU2_CFD_v750_8_308)) && ( ContinuousAdjoint || DiscreteAdjoint)) || (val_software == SU2_COMPONENT::SU2_DOT)) {
 
     cout << endl <<"---------------- Design problem definition  ( Zone "  << iZone << " ) ------------------" << endl;
     if (nObj==1) {
@@ -6609,7 +6610,7 @@ void CConfig::SetOutput(SU2_COMPONENT val_software, unsigned short val_izone) {
 
   }
 
-  if (val_software == SU2_COMPONENT::SU2_CFD) {
+  if ((val_software == SU2_COMPONENT::SU2_CFD) || (val_software == SU2_COMPONENT::SU2_CFD_v750_8_308)) {
 
     auto PrintLimiterInfo = [&](const LIMITER kind_limiter) {
       cout << "Second order integration in space, with slope limiter.\n";
@@ -7074,7 +7075,7 @@ void CConfig::SetOutput(SU2_COMPONENT val_software, unsigned short val_izone) {
         cout << "Euler implicit time integration for the turbulence model." << endl;
   }
 
-  if (val_software == SU2_COMPONENT::SU2_CFD) {
+  if ((val_software == SU2_COMPONENT::SU2_CFD) || (val_software == SU2_COMPONENT::SU2_CFD_v750_8_308))  {
 
     cout << endl <<"------------------ Convergence Criteria  ( Zone "  << iZone << " ) ---------------------" << endl;
 
@@ -7105,7 +7106,7 @@ void CConfig::SetOutput(SU2_COMPONENT val_software, unsigned short val_izone) {
 
   cout << endl <<"-------------------- Output Information ( Zone "  << iZone << " ) ----------------------" << endl;
 
-  if (val_software == SU2_COMPONENT::SU2_CFD) {
+  if ((val_software == SU2_COMPONENT::SU2_CFD) || (val_software == SU2_COMPONENT::SU2_CFD_v750_8_308))  {
 
     if (nVolumeOutputFiles != 0) {
       cout << "File writing frequency: " << endl;
