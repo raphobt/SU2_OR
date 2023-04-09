@@ -249,8 +249,6 @@ void CFlowCompOutput::SetVolumeOutputFields(CConfig *config){
   //AddVolumeOutput("ENTHALPY",     "Enthalpy",                   "PRIMITIVE", "Specific enthalpy");
   AddVolumeOutput("TOTAL_ENTHALPY", "Total_enthalpy",             "PRIMITIVE", "Specific total enthalpy");
   AddVolumeOutput("SOUND_SPEED",    "Sound_speed",                "PRIMITIVE", "Sound speed");
-  AddVolumeOutput("SDD",    "SDD",                                "PRIMITIVE", "Entropy production rate by direct dissipation (mean flow)");
-  AddVolumeOutput("SID",    "SID",                                "PRIMITIVE", "Entropy production rate by indirect dissipation (turbulent or fluctuating flow)");
   /* ---- */
   
   AddVolumeOutput("PRESSURE",    "Pressure",                "PRIMITIVE", "Pressure");
@@ -379,18 +377,18 @@ void CFlowCompOutput::LoadVolumeData(CConfig *config, CGeometry *geometry, CSolv
   int Niter, exitflag;
 
   SetVolumeOutputValue("TOTAL_ENTHALPY", iPoint, h);
-/*
+
   hh=h-Eref_SW;
   //ss=s-Sref_SW;
   
-  guess_1 = Node_Flow->GetTemperature(iPoint);//+Node_Flow->GetVelocity2(iPoint)/2.0/6000.0;
+  guess_1 = Node_Flow->GetTemperature(iPoint)+Node_Flow->GetVelocity2(iPoint)/2.0/1.0e4;
   guess_2 = 1/Node_Flow->GetSolution(iPoint, 0);
 
-  //cout << "\n" << endl;
-  //cout << "T = " << guess_1 << endl;
+  //guess_1 = 290.5;
+  //guess_2 = 0.002;
+  
+  cout << "T = " << guess_1 << endl;
   //cout << "v = " << guess_2 << endl;
-  //cout << "h = " << hh+Eref_SW << endl;
-  //cout << "s = " << ss+Sref_SW << endl;
 
   __non_linear_solvers_MOD_new_rap2d(&MODE, &T_out, &v_out, &resnorm, &Niter, &exitflag,&hh, &ss, &guess_1, &guess_2);
   if (Niter>=500 || T_out!=T_out || v_out!=v_out || v_out<=0.0 || T_out<=100.0){
@@ -427,10 +425,6 @@ void CFlowCompOutput::LoadVolumeData(CConfig *config, CGeometry *geometry, CSolv
 
   SetVolumeOutputValue("TOTAL_PRESSURE", iPoint, pp);
   SetVolumeOutputValue("TOTAL_TEMPERATURE", iPoint, TT);
-*/
-
-  SetVolumeOutputValue("SDD", iPoint, Get_SDD(Node_Flow->GetVelocityGradient(iPoint), solver, iPoint));
-  SetVolumeOutputValue("SID", iPoint, Get_SID(Node_Flow->GetVelocityGradient(iPoint), solver, iPoint, config));
 
 /* ---- */
 

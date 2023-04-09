@@ -29,6 +29,8 @@
 
 #include "CFlowOutput.hpp"
 
+#include "../../include/solvers/CSolver.hpp"
+
 class CVariable;
 
 /*! \class CFlowCompOutput
@@ -67,6 +69,61 @@ public:
    * \param[in] iPoint - Index of the point.
    */
   void LoadVolumeData(CConfig *config, CGeometry *geometry, CSolver **solver, unsigned long iPoint) override;
+
+  /*!
+   * \brief Compute entropy generation rate by direct dissipation SDD
+   * \return Value of SDD at the node
+   */
+  template<class T>
+  su2double Get_SDD(const T& VelocityGradient, CSolver **solver, unsigned long iPoint) const {
+    
+    const auto* Node_Flow = solver[FLOW_SOL]->GetNodes();
+
+    // Make a 3D copy of the gradient so we do not have worry about nDim
+
+    su2double Grad_Vel[3][3] = {{0.0}};
+
+    for (unsigned short iDim = 0; iDim < nDim; iDim++)
+      for (unsigned short jDim = 0 ; jDim < nDim; jDim++)
+        Grad_Vel[iDim][jDim] = VelocityGradient[iDim][jDim];
+
+    // Definition of the modulus of the mean rate of strain tensor Smean
+    su2double SmeanModulus = pow(2 * ( pow(Grad_Vel[0][0], 2) + pow(Grad_Vel[1][1], 2) + pow(Grad_Vel[2][2], 2) ) \
+    + pow(Grad_Vel[0][1] + Grad_Vel[1][0], 2) \
+    + pow(Grad_Vel[0][2] + Grad_Vel[2][0], 2) \
+    + pow(Grad_Vel[1][2] + Grad_Vel[2][1], 2), 0.5);
+
+    // Entropy production rate by direct dissipation SDD (Kock and Herwig, 2004-2006)
+    // SDD = molecular_visco / T * ||S||
+    
+    su2double SDD = Node_Flow->GetLaminarViscosity(iPoint) / Node_Flow->GetTemperature(iPoint) * SmeanModulus;
+    
+    return SDD;
+  }
+
+  /*!
+   * \brief Compute entropy generation rate by indirect dissipation SID
+   * \return Value of SDD at the node
+   */
+  template<class T>
+  su2double Get_SID(const T& VelocityGradient, CSolver **solver, unsigned long iPoint, CConfig *config) const {
+
+    const auto* turb_solver = solver[TURB_SOL];
+    const auto* Node_Flow = solver[FLOW_SOL]->GetNodes();
+    const auto* Node_Turb = (config->GetKind_Turb_Model() != TURB_MODEL::NONE) ? turb_solver->GetNodes() : nullptr;
+    
+    su2double betaStar = 0.09;
+    su2double omega = Node_Turb->GetSolution(iPoint, 1);
+    su2double k = Node_Turb->GetSolution(iPoint, 0);
+    su2double epsilon = betaStar * omega * k;
+
+    // Entropy production rate by indirect (turbulent flow) dissipation SID (Kock and Herwig, 2004-2006)
+    // SID = rho * epsilon / T
+
+    su2double SID = Node_Flow->GetSolution(iPoint, 0) * epsilon / Node_Flow->GetTemperature(iPoint);
+    
+    return SID;
+  }
 
   /*!
    * \brief Set the available history output fields
