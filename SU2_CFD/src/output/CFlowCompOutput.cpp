@@ -251,6 +251,8 @@ void CFlowCompOutput::SetVolumeOutputFields(CConfig *config){
   AddVolumeOutput("SOUND_SPEED",    "Sound_speed",                "PRIMITIVE", "Sound speed");
   AddVolumeOutput("SDD",    "SDD",                                "PRIMITIVE", "Entropy production rate by direct dissipation (mean flow)");
   AddVolumeOutput("SID",    "SID",                                "PRIMITIVE", "Entropy production rate by indirect dissipation (turbulent or fluctuating flow)");
+  AddVolumeOutput("SDT",    "SDT",                                "PRIMITIVE", "Entropy production rate by mean flow temperature gradients");
+  AddVolumeOutput("SIT",    "SIT",                                "PRIMITIVE", "Entropy production rate by turbulent or fluctuating flow temperature gradients)");
   /* ---- */
   
   AddVolumeOutput("PRESSURE",    "Pressure",                "PRIMITIVE", "Pressure");
@@ -430,7 +432,9 @@ void CFlowCompOutput::LoadVolumeData(CConfig *config, CGeometry *geometry, CSolv
 */
 
   SetVolumeOutputValue("SDD", iPoint, Get_SDD(Node_Flow->GetVelocityGradient(iPoint), solver, iPoint));
-  SetVolumeOutputValue("SID", iPoint, Get_SID(Node_Flow->GetVelocityGradient(iPoint), solver, iPoint, config));
+  SetVolumeOutputValue("SID", iPoint, Get_SID(solver, iPoint, config));
+  SetVolumeOutputValue("SDT", iPoint, Get_SDT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint));
+  SetVolumeOutputValue("SIT", iPoint, Get_SIT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint, config, geometry));
 
 /* ---- */
 

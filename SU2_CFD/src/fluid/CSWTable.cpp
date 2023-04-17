@@ -225,8 +225,8 @@ void CSWTable::SetTDState_hs(su2double h, su2double s) {
     //guess_2=1.0/200.0;
     
     /* OP1 8 MPa - 308 K */
-    guess_1=308.0;
-    guess_2=1.0/436.24;
+    //guess_1=308.0;
+    //guess_2=1.0/436.24;
     /* OP2 8 MPa - 318 K */
     //guess_1=318.0;
     //guess_2=1.0/241.86;
@@ -243,8 +243,8 @@ void CSWTable::SetTDState_hs(su2double h, su2double s) {
     //guess_1=311.0;
     //guess_2=1.0/306.7;
     /* OP7 9 MPa - 315 K */
-    //guess_1=315.0;
-    //guess_2=1.0/408.4;
+    guess_1=315.0;
+    guess_2=1.0/408.4;
     /* OP8 9 MPa - 307 K */
     //guess_1=307.0;
     //guess_2=1.0/685.3;
@@ -394,8 +394,8 @@ void CSWTable::SetTDState_Ps(su2double P, su2double s) {
     //guess_2=1.0/250.0;
     
     /* OP1 8 MPa - 308 K */
-    guess_1=308.0;
-    guess_2=1.0/436.24;
+    //guess_1=308.0;
+    //guess_2=1.0/436.24;
     /* OP2 8 MPa - 318 K */
     //guess_1=318.0;
     //guess_2=1.0/241.86;
@@ -412,8 +412,8 @@ void CSWTable::SetTDState_Ps(su2double P, su2double s) {
     //guess_1=311.0;
     //guess_2=1.0/306.7;
     /* OP7 9 MPa - 315 K */
-    //guess_1=315.0;
-    //guess_2=1.0/408.4;
+    guess_1=315.0;
+    guess_2=1.0/408.4;
     /* OP8 9 MPa - 307 K */
     //guess_1=307.0;
     //guess_2=1.0/685.3;
@@ -519,6 +519,24 @@ su2double CSWTable::GetThermalConductivity() {
         cout << "NaN for Kt in GetLaminarViscosity" << endl;
     }
   return Kt;
+}
+
+su2double CSWTable::GetSpecificHeatCp() {
+    double cp_out,vp_out;
+    su2double vv = 1.0/Density;
+    su2double TT = Temperature;
+    su2double x_in = Quality;
+    su2double pp = Pressure;
+    int flag = Flag_loca;
+    __transprop_MOD_cpco2(&cp_out, &vv, &vp_out, &x_in, &TT, &pp, &flag);
+    Cp=cp_out;
+    if(cp_out<0.0){
+        cout << "Negative cp in Get_cp : cp = " << cp_out << endl;
+    }
+    if(cp_out!=cp_out){
+        cout << "NaN for cp in GetLaminarViscosity" << endl;
+    }
+  return Cp;
 }
 
 

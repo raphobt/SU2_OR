@@ -225,6 +225,15 @@ class CEulerVariable : public CFlowVariable {
   inline su2double GetTemperature(unsigned long iPoint) const final { return Primitive(iPoint,indices.Temperature()); }
 
   /*!
+   * \brief Get the temperature gradient.
+   * \return Value of the temperature gradient.
+   */
+  inline CMatrixView<const su2double> GetTemperatureGradient(unsigned long iPoint) const {
+    return Gradient_Primitive(iPoint, indices.Temperature());
+  }
+
+  /*!
+  /*!
    * \brief Get the velocity of the flow.
    * \param[in] iDim - Index of the dimension.
    * \return Value of the velocity for the dimension <i>iDim</i>.

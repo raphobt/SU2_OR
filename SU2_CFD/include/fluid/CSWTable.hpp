@@ -120,4 +120,7 @@ class CSWTable final : public CIdealGas {
     su2double GetLaminarViscosity(); /*override;*/
 
     su2double GetThermalConductivity(); /*override;*/
+
+    su2double GetSpecificHeatCp(); /*override;*/
+
 };

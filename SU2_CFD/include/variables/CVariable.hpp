@@ -1050,6 +1050,15 @@ public:
   /*!
    * \brief A virtual member.
    * \param[in] iPoint - Point index.
+   * \return Value of the temperature gradient.
+   */
+  inline virtual CMatrixView<const su2double> GetTemperatureGradient(unsigned long iPoint) const {
+    return CMatrixView<const su2double>();
+  }
+
+  /*!
+   * \brief A virtual member.
+   * \param[in] iPoint - Point index.
    * \return Value of the vibrational-electronic temperature.
    */
   inline virtual su2double GetTemperature_ve(unsigned long iPoint) const { return 0.0; }

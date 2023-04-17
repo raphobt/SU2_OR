@@ -103,16 +103,17 @@ public:
 
   /*!
    * \brief Compute entropy generation rate by indirect dissipation SID
-   * \return Value of SDD at the node
+   * \return Value of SID at the node
    */
-  template<class T>
-  su2double Get_SID(const T& VelocityGradient, CSolver **solver, unsigned long iPoint, CConfig *config) const {
+  //template<class T>
+  //su2double Get_SID(const T& VelocityGradient, CSolver **solver, unsigned long iPoint, CConfig *config) const {
+  su2double Get_SID(CSolver **solver, unsigned long iPoint, CConfig *config) const {
 
     const auto* turb_solver = solver[TURB_SOL];
     const auto* Node_Flow = solver[FLOW_SOL]->GetNodes();
     const auto* Node_Turb = (config->GetKind_Turb_Model() != TURB_MODEL::NONE) ? turb_solver->GetNodes() : nullptr;
     
-    su2double betaStar = 0.09;
+    su2double betaStar = 0.09; // Impove: retrieve the betaStar value from the turbulence model (SST k-om)
     su2double omega = Node_Turb->GetSolution(iPoint, 1);
     su2double k = Node_Turb->GetSolution(iPoint, 0);
     su2double epsilon = betaStar * omega * k;
@@ -123,6 +124,64 @@ public:
     su2double SID = Node_Flow->GetSolution(iPoint, 0) * epsilon / Node_Flow->GetTemperature(iPoint);
     
     return SID;
+  }
+
+  /*!
+   * \brief Compute entropy generation rate by the mean flow temperature gradients SDT
+   * \return Value of SDT at the node
+   */
+  template<class T>
+  su2double Get_SDT(const T& TemperatureGradient, CSolver **solver, unsigned long iPoint) const {
+    
+    const auto* Node_Flow = solver[FLOW_SOL]->GetNodes();
+    
+    // Make a 3D copy of the gradient so we do not have worry about nDim
+    su2double Grad_Temp[3][3] = {{0.0}};
+
+    for (unsigned short iDim = 0; iDim < nDim; iDim++)
+      for (unsigned short jDim = 0 ; jDim < nDim; jDim++)
+        Grad_Temp[iDim][jDim] = TemperatureGradient[iDim][jDim];
+
+    // Entropy production rate by SDT (Kock and Herwig, 2004-2006)
+    // SDT =  ( thermal_cond / T*T ) * || grad(T) || ** 2 
+    
+    su2double SDT = ( Node_Flow->GetThermalConductivity(iPoint) / Node_Flow->GetTemperature(iPoint) / Node_Flow->GetTemperature(iPoint) ) * ( Grad_Temp[0][0] * Grad_Temp[0][0] + Grad_Temp[1][0] * Grad_Temp[1][0] + Grad_Temp[2][0] * Grad_Temp[2][0] );
+    
+    return SDT;
+  }
+
+  /*!
+   * \brief Compute entropy generation rate by the instantaneous flow temperature gradients SIT
+   * \return Value of SIT at the node. Here GetSpecificHeatCp() is defined in CSWTable.cpp as for turb visc and thermal cond from SW table
+   */
+  template<class T>
+  su2double Get_SIT(const T& TemperatureGradient, CSolver **solver, unsigned long iPoint, CConfig *config, CGeometry *geometry) const {
+    
+    const auto* Node_Flow = solver[FLOW_SOL]->GetNodes();
+    //nPointDomain = geometry->GetnPointDomain();
+    //vector<su2double> lambda_turb[nPointDomain];
+    su2double lambda_turb;
+    
+    // Make a 3D copy of the gradient so we do not have worry about nDim
+    su2double Grad_Temp[3][3] = {{0.0}};
+
+    for (unsigned short iDim = 0; iDim < nDim; iDim++)
+      for (unsigned short jDim = 0 ; jDim < nDim; jDim++)
+        Grad_Temp[iDim][jDim] = TemperatureGradient[iDim][jDim];
+   
+    if( Node_Flow->GetSpecificHeatCp(iPoint) > 0.0 && Node_Flow->GetSpecificHeatCp(iPoint) < 3.0e4 ){
+      lambda_turb = Node_Flow->GetEddyViscosity(iPoint) * Node_Flow->GetSpecificHeatCp(iPoint) / config->GetPrandtl_Turb();
+    }
+    else{
+      cout << "cp out of range for computing turbulent thermal conductivity: cp = " << Node_Flow->GetSpecificHeatCp(iPoint) << endl;
+    }
+
+    // Entropy production rate by SIT (Kock and Herwig, 2004-2006)
+    // SIT =  ( turb_thermal_cond / T*T ) * || grad(T) || ** 2 
+    
+    su2double SIT = ( lambda_turb / Node_Flow->GetTemperature(iPoint) / Node_Flow->GetTemperature(iPoint) ) * ( Grad_Temp[0][0] * Grad_Temp[0][0] + Grad_Temp[1][0] * Grad_Temp[1][0] + Grad_Temp[2][0] * Grad_Temp[2][0] );
+    
+    return SIT;
   }
 
   /*!
