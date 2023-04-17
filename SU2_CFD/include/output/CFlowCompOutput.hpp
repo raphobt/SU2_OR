@@ -173,7 +173,8 @@ public:
       lambda_turb = Node_Flow->GetEddyViscosity(iPoint) * Node_Flow->GetSpecificHeatCp(iPoint) / config->GetPrandtl_Turb();
     }
     else{
-      cout << "cp out of range for computing turbulent thermal conductivity: cp = " << Node_Flow->GetSpecificHeatCp(iPoint) << endl;
+      cout << "cp out of range for computing turbulent thermal conductivity: cp = " << Node_Flow->GetSpecificHeatCp(iPoint) << " J/kg/K"  << endl;
+      cout << "Turbulent thermal conductivity: lambda_turb = " << lambda_turb << " W/m/K"  << endl;
     }
 
     // Entropy production rate by SIT (Kock and Herwig, 2004-2006)

@@ -253,6 +253,8 @@ void CFlowCompOutput::SetVolumeOutputFields(CConfig *config){
   AddVolumeOutput("SID",    "SID",                                "PRIMITIVE", "Entropy production rate by indirect dissipation (turbulent or fluctuating flow)");
   AddVolumeOutput("SDT",    "SDT",                                "PRIMITIVE", "Entropy production rate by mean flow temperature gradients");
   AddVolumeOutput("SIT",    "SIT",                                "PRIMITIVE", "Entropy production rate by turbulent or fluctuating flow temperature gradients)");
+  AddVolumeOutput("ENTROPY_PROD_RATE",    "Entropy_prod_rate",    "PRIMITIVE", "Entropy production rate (global) [W/kg]");
+  AddVolumeOutput("BEJAN",  "Bejan_number",                       "PRIMITIVE", "Bejan number (SDT+SIT)/(SDD+SID+SDT+SIT)");
   /* ---- */
   
   AddVolumeOutput("PRESSURE",    "Pressure",                "PRIMITIVE", "Pressure");
@@ -381,7 +383,7 @@ void CFlowCompOutput::LoadVolumeData(CConfig *config, CGeometry *geometry, CSolv
   int Niter, exitflag;
 
   SetVolumeOutputValue("TOTAL_ENTHALPY", iPoint, h);
-/*
+
   hh=h-Eref_SW;
   //ss=s-Sref_SW;
   
@@ -429,12 +431,25 @@ void CFlowCompOutput::LoadVolumeData(CConfig *config, CGeometry *geometry, CSolv
 
   SetVolumeOutputValue("TOTAL_PRESSURE", iPoint, pp);
   SetVolumeOutputValue("TOTAL_TEMPERATURE", iPoint, TT);
-*/
+
 
   SetVolumeOutputValue("SDD", iPoint, Get_SDD(Node_Flow->GetVelocityGradient(iPoint), solver, iPoint));
   SetVolumeOutputValue("SID", iPoint, Get_SID(solver, iPoint, config));
   SetVolumeOutputValue("SDT", iPoint, Get_SDT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint));
   SetVolumeOutputValue("SIT", iPoint, Get_SIT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint, config, geometry));
+  
+  SetVolumeOutputValue("ENTROPY_PROD_RATE", iPoint, Node_Flow->GetTemperature(iPoint) / Node_Flow->GetSolution(iPoint, 4) * \
+                                                 (  Get_SDD(Node_Flow->GetVelocityGradient(iPoint), solver, iPoint) \
+                                                  + Get_SID(solver, iPoint, config) \
+                                                  + Get_SDT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint) \
+                                                  + Get_SIT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint, config, geometry)  ));
+
+  SetVolumeOutputValue("BEJAN", iPoint, (  Get_SDT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint) \
+                                         + Get_SIT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint, config, geometry) ) \
+                                           / (  Get_SDD(Node_Flow->GetVelocityGradient(iPoint), solver, iPoint) \
+                                              + Get_SID(solver, iPoint, config) \
+                                              + Get_SDT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint) \
+                                              + Get_SIT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint, config, geometry) ) );
 
 /* ---- */
 
