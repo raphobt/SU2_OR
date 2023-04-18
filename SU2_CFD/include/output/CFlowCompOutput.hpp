@@ -30,6 +30,7 @@
 #include "CFlowOutput.hpp"
 
 #include "../../include/solvers/CSolver.hpp"
+#include "../../include/fluid/CSWTable.hpp"
 
 class CVariable;
 
@@ -185,6 +186,162 @@ public:
     return SIT;
   }
 
+  /*!
+   * \brief Compute total enthalpy, total pressure and total temperature of the flow 
+   * \return Value of h0 at the node.
+   */
+  su2double Get_h0(CSolver **solver, unsigned long iPoint) const {
+    
+    const auto* Node_Flow = solver[FLOW_SOL]->GetNodes();
+    
+    int flag;
+    double pp, TT, cc, x_out, a_out, dummy;
+    double Eref_SW=506779.92063833564;
+    su2double vv = 1.0/Node_Flow->GetSolution(iPoint, 0);
+    su2double ee;
+    if (nDim == 3){
+    ee = Node_Flow->GetSolution(iPoint, 4)*vv - Eref_SW - Node_Flow->GetVelocity2(iPoint)/2.0; // internal energy
+    } else {
+    ee = Node_Flow->GetSolution(iPoint, 3)*vv - Eref_SW - Node_Flow->GetVelocity2(iPoint)/2.0;
+    }
+    __interp_table_MOD_co2bllt_equi(&pp,&TT,&cc,&x_out,&a_out,&dummy,&ee,&vv,&flag);
+
+    // specific total enthalpy (based on total energy) 
+    su2double h0=Node_Flow->GetSolution(iPoint, 4)*vv+pp*vv;
+
+    return h0;
+  }
+
+  /*!
+   * \brief Compute total pressure or total temperature of the flow depending on choice value
+   * \return Value of p0 or T0 at the node.
+   */
+  su2double Get_p0_T0(CSolver **solver, unsigned long iPoint, int choice) const {
+    
+    const auto* Node_Flow = solver[FLOW_SOL]->GetNodes();
+    
+    int Niter, flag, exitflag, MODE=5;
+    double pp, TT, ss, cc, x_out, a_out, dummy, resnorm, guess_1, guess_2;
+    double Eref_SW=506779.92063833564;
+    
+    su2double T_out, v_out, energy, hh;
+    su2double vv = 1.0/Node_Flow->GetSolution(iPoint, 0);
+    su2double ee;
+    if (nDim == 3){ ee = Node_Flow->GetSolution(iPoint, 4)*vv - Eref_SW - Node_Flow->GetVelocity2(iPoint)/2.0; // internal energy
+    } 
+    else { ee = Node_Flow->GetSolution(iPoint, 3)*vv - Eref_SW - Node_Flow->GetVelocity2(iPoint)/2.0;
+    }
+    
+    __interp_table_MOD_co2bllt_equi(&pp,&TT,&cc,&x_out,&a_out,&dummy,&ee,&vv,&flag);
+
+    // specific entropy
+    __transprop_MOD_entropyco2(&ss, &vv, &dummy, &x_out, &TT, &pp, &flag);
+
+    hh=Get_h0(solver, iPoint)-Eref_SW;
+  
+    guess_1 = Node_Flow->GetTemperature(iPoint);//+Node_Flow->GetVelocity2(iPoint)/2.0/6000.0;
+    guess_2 = 1/Node_Flow->GetSolution(iPoint, 0);
+
+    __non_linear_solvers_MOD_new_rap2d(&MODE, &T_out, &v_out, &resnorm, &Niter, &exitflag,&hh, &ss, &guess_1, &guess_2);
+    if (Niter>=500 || T_out!=T_out || v_out!=v_out || v_out<=0.0 || T_out<=100.0){
+    for(int i=1;i<20; i++){
+      guess_2=guess_2/1.1;
+      __non_linear_solvers_MOD_new_rap2d(&MODE, &T_out, &v_out, &resnorm, &Niter, &exitflag,&hh, &ss, &guess_1, &guess_2);
+      if (Niter<500 & T_out==T_out & v_out==v_out & v_out>0.0 & T_out>100.0){
+          break;
+      }
+    }
+    }
+    if (Niter>=500 ){ cout << "Max iteration reached in SetTDState_hs" << endl;
+    }
+    if (T_out!=T_out){ cout << "NAN T in SetTDState_hs CFlowCompOutput" << endl;
+    }
+    if (v_out!=v_out){ cout << "NAN v in SetTDState_hs" << endl;
+    }
+    if (v_out<=0.0){ cout << "Negative v in SetTDState_hs : v = " << v_out << endl;
+    }
+    if (T_out<=100.0){ cout << "Too low T in SetTDState_hs : T = " << T_out << endl;
+    }
+  
+    __properties_MOD_inter_energy(&T_out, &v_out, &energy);
+    if (energy!=energy){ cout << "NAN e in SetTDState_hs" << endl;
+    }
+    
+    __interp_table_MOD_co2bllt_equi(&pp,&TT,&cc,&x_out,&a_out,&dummy,&energy,&v_out,&flag);
+
+    su2double p0 = pp;
+    su2double T0 = TT;
+
+    if (choice == 0){ return p0;
+    }
+    else if (choice == 1){ return T0;
+    }
+    else { 
+      cout << "Check the choice int value in CFlowCompOutput.cpp to output p0 and T0 fields..."<< endl;
+      return 0.0;
+    }
+
+  }
+
+  /*!
+   * \brief Compute total pressure of the flow 
+   * \return Value of p0 at the node.
+   */
+ // su2double Get_T0(CSolver **solver, unsigned long iPoint, su2double T0) const {
+  /*  
+    const auto* Node_Flow = solver[FLOW_SOL]->GetNodes();
+    
+    int Niter, flag, exitflag, MODE=5;
+    double pp, TT, ss, cc, x_out, a_out, dummy, resnorm, guess_1, guess_2;
+    double Eref_SW=506779.92063833564;
+    
+    su2double T_out, v_out, energy, hh;
+    su2double vv = 1.0/Node_Flow->GetSolution(iPoint, 0);
+    su2double ee;
+    if (nDim == 3){ ee = Node_Flow->GetSolution(iPoint, 4)*vv - Eref_SW - Node_Flow->GetVelocity2(iPoint)/2.0; // internal energy
+    } 
+    else { ee = Node_Flow->GetSolution(iPoint, 3)*vv - Eref_SW - Node_Flow->GetVelocity2(iPoint)/2.0;
+    }
+    
+    __interp_table_MOD_co2bllt_equi(&pp,&TT,&cc,&x_out,&a_out,&dummy,&ee,&vv,&flag);
+
+    // specific entropy
+    __transprop_MOD_entropyco2(&ss, &vv, &dummy, &x_out, &TT, &pp, &flag);
+
+    hh=Get_h0(solver, iPoint)-Eref_SW;
+  
+    guess_1 = Node_Flow->GetTemperature(iPoint);//+Node_Flow->GetVelocity2(iPoint)/2.0/6000.0;
+    guess_2 = 1/Node_Flow->GetSolution(iPoint, 0);
+
+    __non_linear_solvers_MOD_new_rap2d(&MODE, &T_out, &v_out, &resnorm, &Niter, &exitflag,&hh, &ss, &guess_1, &guess_2);
+    if (Niter>=500 || T_out!=T_out || v_out!=v_out || v_out<=0.0 || T_out<=100.0){
+    for(int i=1;i<20; i++){
+      guess_2=guess_2/1.1;
+      __non_linear_solvers_MOD_new_rap2d(&MODE, &T_out, &v_out, &resnorm, &Niter, &exitflag,&hh, &ss, &guess_1, &guess_2);
+      if (Niter<500 & T_out==T_out & v_out==v_out & v_out>0.0 & T_out>100.0){
+          break;
+      }
+    }
+    }
+    if (Niter>=500 ){ cout << "Max iteration reached in SetTDState_hs" << endl;
+    }
+    if (T_out!=T_out){ cout << "NAN T in SetTDState_hs CFlowCompOutput" << endl;
+    }
+    if (v_out!=v_out){ cout << "NAN v in SetTDState_hs" << endl;
+    }
+    if (v_out<=0.0){ cout << "Negative v in SetTDState_hs : v = " << v_out << endl;
+    }
+    if (T_out<=100.0){ cout << "Too low T in SetTDState_hs : T = " << T_out << endl;
+    }
+    
+    __interp_table_MOD_co2bllt_equi(&pp,&TT,&cc,&x_out,&a_out,&dummy,&energy,&v_out,&flag);
+*/
+
+    //Get_p0(solver, iPoint);
+
+    //return T0;
+//  }
+  
   /*!
    * \brief Set the available history output fields
    * \param[in] config - Definition of the particular problem.

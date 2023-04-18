@@ -375,64 +375,18 @@ void CFlowCompOutput::LoadVolumeData(CConfig *config, CGeometry *geometry, CSolv
   __transprop_MOD_entropyco2(&ss, &vv, &dummy, &x_out, &TT, &pp, &flag);
   SetVolumeOutputValue("ENTROPY", iPoint, ss+Sref_SW);
 
-  // specific total enthalpy (based on total energy) & total pressure & total temperature 
-  int MODE=5;
-  su2double h=Node_Flow->GetSolution(iPoint, 4)*vv+pp*vv;
-  double resnorm, guess_1, guess_2;
-  su2double T_out, v_out, energy, hh;
-  int Niter, exitflag;
+  // specific total enthalpy (based on total energy)
+  SetVolumeOutputValue("TOTAL_ENTHALPY", iPoint, Get_h0(solver, iPoint));
 
-  SetVolumeOutputValue("TOTAL_ENTHALPY", iPoint, h);
+  // total pressure
+  int choice = 0;
+  SetVolumeOutputValue("TOTAL_PRESSURE", iPoint, Get_p0_T0(solver, iPoint, choice));
 
-  hh=h-Eref_SW;
-  //ss=s-Sref_SW;
-  
-  guess_1 = Node_Flow->GetTemperature(iPoint);//+Node_Flow->GetVelocity2(iPoint)/2.0/6000.0;
-  guess_2 = 1/Node_Flow->GetSolution(iPoint, 0);
+  // total temperature
+  choice = 1;
+  SetVolumeOutputValue("TOTAL_TEMPERATURE", iPoint, Get_p0_T0(solver, iPoint, choice));
 
-  //cout << "\n" << endl;
-  //cout << "T = " << guess_1 << endl;
-  //cout << "v = " << guess_2 << endl;
-  //cout << "h = " << hh+Eref_SW << endl;
-  //cout << "s = " << ss+Sref_SW << endl;
-
-  __non_linear_solvers_MOD_new_rap2d(&MODE, &T_out, &v_out, &resnorm, &Niter, &exitflag,&hh, &ss, &guess_1, &guess_2);
-  if (Niter>=500 || T_out!=T_out || v_out!=v_out || v_out<=0.0 || T_out<=100.0){
-  for(int i=1;i<20; i++){
-    guess_2=guess_2/1.1;
-    __non_linear_solvers_MOD_new_rap2d(&MODE, &T_out, &v_out, &resnorm, &Niter, &exitflag,&hh, &ss, &guess_1, &guess_2);
-    if (Niter<500 & T_out==T_out & v_out==v_out & v_out>0.0 & T_out>100.0){
-        break;
-    }
-  }
-  }
-  if (Niter>=500 ){
-  cout << "Max iteration reached in SetTDState_hs" << endl;
-  }
-  if (T_out!=T_out){
-  cout << "NAN T in SetTDState_hs CFlowCompOutput" << endl;
-  }
-  if (v_out!=v_out){
-  cout << "NAN v in SetTDState_hs" << endl;
-  }
-  if (v_out<=0.0){
-  cout << "Negative v in SetTDState_hs : v = " << v_out << endl;
-  }
-  if (T_out<=100.0){
-  cout << "Too low T in SetTDState_hs : T = " << T_out << endl;
-  }
-
-  __properties_MOD_inter_energy(&T_out, &v_out, &energy);
-  if (energy!=energy){
-  cout << "NAN e in SetTDState_hs" << endl;
-  }
-  
-  __interp_table_MOD_co2bllt_equi(&pp,&TT,&cc,&x_out,&a_out,&dummy,&energy,&v_out,&flag);
-
-  SetVolumeOutputValue("TOTAL_PRESSURE", iPoint, pp);
-  SetVolumeOutputValue("TOTAL_TEMPERATURE", iPoint, TT);
-
-
+  // entropy production terms
   SetVolumeOutputValue("SDD", iPoint, Get_SDD(Node_Flow->GetVelocityGradient(iPoint), solver, iPoint));
   SetVolumeOutputValue("SID", iPoint, Get_SID(solver, iPoint, config));
   SetVolumeOutputValue("SDT", iPoint, Get_SDT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint));
@@ -444,6 +398,7 @@ void CFlowCompOutput::LoadVolumeData(CConfig *config, CGeometry *geometry, CSolv
                                                   + Get_SDT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint) \
                                                   + Get_SIT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint, config, geometry)  ));
 
+  // Bejan number
   SetVolumeOutputValue("BEJAN", iPoint, (  Get_SDT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint) \
                                          + Get_SIT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint, config, geometry) ) \
                                            / (  Get_SDD(Node_Flow->GetVelocityGradient(iPoint), solver, iPoint) \
@@ -451,7 +406,7 @@ void CFlowCompOutput::LoadVolumeData(CConfig *config, CGeometry *geometry, CSolv
                                               + Get_SDT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint) \
                                               + Get_SIT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint, config, geometry) ) );
 
-/* ---- */
+  /* ---- */
 
   const su2double factor = solver[FLOW_SOL]->GetReferenceDynamicPressure();
   //SetVolumeOutputValue("PRESSURE_COEFF", iPoint, (Node_Flow->GetPressure(iPoint) - solver[FLOW_SOL]->GetPressure_Inf())/factor);
