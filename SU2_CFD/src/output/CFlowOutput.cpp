@@ -37,6 +37,8 @@
 #include "../../include/variables/CNEMOEulerVariable.hpp"
 #include "../../include/fluid/CCoolProp.hpp"
 
+#include "../../include/output/CFlowCompOutput.hpp"
+
 CFlowOutput::CFlowOutput(const CConfig *config, unsigned short nDim, bool fem_output) :
   CFVMOutput(config, nDim, fem_output),
   lastInnerIter(curInnerIter) {
@@ -156,6 +158,8 @@ void CFlowOutput::SetAnalyzeSurface(const CSolver* const*solver, const CGeometry
   const bool axisymmetric               = config->GetAxisymmetric();
   const unsigned short nMarker_Analyze  = config->GetnMarker_Analyze();
 
+  const auto* Node_Flow = solver[FLOW_SOL]->GetNodes(); // new add
+
   const auto flow_nodes = solver[FLOW_SOL]->GetNodes();
   const CVariable* species_nodes = species ? solver[SPECIES_SOL]->GetNodes() : nullptr;
 
@@ -243,6 +247,13 @@ void CFlowOutput::SetAnalyzeSurface(const CSolver* const*solver, const CGeometry
             Enthalpy          = flow_nodes->GetSpecificHeatCp(iPoint)*Temperature;
             TotalTemperature  = Temperature + 0.5*Velocity2/flow_nodes->GetSpecificHeatCp(iPoint);
             TotalPressure     = Pressure + 0.5*Density*Velocity2;
+          }
+          else if (config->GetKind_FluidModel() == SW_TABLE){
+            Enthalpy          = Get_h0(solver, iPoint); // Total enthalpy !!
+	    int choice = 1;
+            TotalTemperature  = Get_p0_T0(solver, iPoint, choice);
+	    choice = 0;
+            TotalPressure     = Get_p0_T0(solver, iPoint, choice);
           }
           else{
             Mach              = sqrt(Velocity2)/SoundSpeed;

@@ -38,6 +38,8 @@
 #include "../../../Common/include/CConfig.hpp"
 #include "../../../Common/include/containers/container_decorators.hpp"
 
+//#include "../../include/solvers/CSolver.hpp"
+
 class CFluidModel;
 class CNEMOGas;
 
@@ -1047,6 +1049,8 @@ public:
    */
   inline virtual su2double GetTemperature(unsigned long iPoint) const { return 0.0; }
 
+/***********/
+
   /*!
    * \brief A virtual member.
    * \param[in] iPoint - Point index.
@@ -1055,6 +1059,20 @@ public:
   inline virtual CMatrixView<const su2double> GetTemperatureGradient(unsigned long iPoint) const {
     return CMatrixView<const su2double>();
   }
+
+  /*!
+   * \brief A virtual member.
+   * \return Value of the total enthalpy when SW_TABLE is used.
+   */
+ // inline virtual su2double Get_h0(CSolver **solver, unsigned long iPoint) const { return 0.0; }
+
+  /*!
+   * \brief A virtual member.
+   * \return Value of the total pressure and total temperature when SW_TABLE is used.
+   */
+ // inline virtual su2double Get_p0_T0(CSolver **solver, unsigned long iPoint, int choice) const { return 0.0; }
+
+/***********/
 
   /*!
    * \brief A virtual member.
