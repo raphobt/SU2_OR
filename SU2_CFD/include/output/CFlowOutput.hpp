@@ -374,13 +374,14 @@ protected:
 
     hh=Get_h0(solver, iPoint)-Eref_SW;
   
-    guess_1 = Node_Flow->GetTemperature(iPoint);//+Node_Flow->GetVelocity2(iPoint)/2.0/6000.0;
+    guess_1 = Node_Flow->GetTemperature(iPoint);//+Node_Flow->GetVelocity2(iPoint)/2.0/19000.0;
     guess_2 = 1/Node_Flow->GetSolution(iPoint, 0);
 
     __non_linear_solvers_MOD_new_rap2d(&MODE, &T_out, &v_out, &resnorm, &Niter, &exitflag,&hh, &ss, &guess_1, &guess_2);
     if (Niter>=500 || T_out!=T_out || v_out!=v_out || v_out<=0.0 || T_out<=100.0){
     for(int i=1;i<20; i++){
-      guess_2=guess_2/1.1;
+      guess_2=guess_2*1.001;
+      guess_1=guess_1*1.001;
       __non_linear_solvers_MOD_new_rap2d(&MODE, &T_out, &v_out, &resnorm, &Niter, &exitflag,&hh, &ss, &guess_1, &guess_2);
       if (Niter<500 & T_out==T_out & v_out==v_out & v_out>0.0 & T_out>100.0){
           break;

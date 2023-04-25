@@ -225,23 +225,23 @@ void CSWTable::SetTDState_hs(su2double h, su2double s) {
     //guess_2=1.0/200.0;
     
     /* OP1 8 MPa - 308 K */
-    //guess_1=308.0;
-    //guess_2=1.0/436.24;
+    guess_1=308.0;
+    guess_2=1.0/436.24;
     /* OP2 8 MPa - 318 K */
     //guess_1=318.0;
     //guess_2=1.0/241.86;
-    /* OP3 10 MPa - 308 K */
-    //guess_1=308.0;
-    //guess_2=1.0/714.84;
-    /* OP4 10 MPa - 318 K */
-    //guess_1=318.0;
-    //guess_2=1.0/502.56;
     /* OP6 9 MPa - 310 K */
     //guess_1=310.0;
     //guess_2=1.0/614.87;
+    /* case 3 Lettieri 7.3 MPa - 310 K */
+    //guess_1=310.0;
+    //guess_2=1.0/234.2;
     /* case 4 Lettieri 8 MPa - 311 K */
-    guess_1=311.0;
-    guess_2=1.0/306.7;
+    //guess_1=311.0;
+    //guess_2=1.0/306.7;
+    /* case 5 Lettieri 8.4 MPa - 312 K */
+    //guess_1=312.0;
+    //guess_2=1.0/364.3;
     /* OP7 9 MPa - 315 K */
     //guess_1=315.0;
     //guess_2=1.0/408.4;
@@ -254,6 +254,9 @@ void CSWTable::SetTDState_hs(su2double h, su2double s) {
     /* OP10 9 MPa - 311 K */
     //guess_1=311.0;
     //guess_2=1.0/581.5;
+    /* OP11 9 MPa - 313 K */
+    //guess_1=313.0;
+    //guess_2=1.0/492.7;
     
     __non_linear_solvers_MOD_new_rap2d(&MODE, &T_out, &v_out, &resnorm, &Niter, &exitflag,&hh, &ss, &guess_1, &guess_2);
     if (Niter>=500 || T_out!=T_out || v_out!=v_out || v_out<=0.0 || T_out<=100.0){
@@ -397,23 +400,23 @@ void CSWTable::SetTDState_Ps(su2double P, su2double s) {
     //guess_2=1.0/250.0;
     
     /* OP1 8 MPa - 308 K */
-    //guess_1=308.0;
-    //guess_2=1.0/436.24;
+    guess_1=308.0;
+    guess_2=1.0/436.24;
     /* OP2 8 MPa - 318 K */
     //guess_1=318.0;
     //guess_2=1.0/241.86;
-    /* OP3 10 MPa - 308 K */
-    //guess_1=308.0;
-    //guess_2=1.0/714.84;
-    /* OP4 10 MPa - 318 K */
-    //guess_1=318.0;
-    //guess_2=1.0/502.56;
     /* OP6 9 MPa - 310 K */
     //guess_1=310.0;
     //guess_2=1.0/614.87;
+    /* case 3 Lettieri 7.3 MPa - 310 K */
+    //guess_1=310.0;
+    //guess_2=1.0/234.2;
     /* case 4 Lettieri 8 MPa - 311 K */
-    guess_1=311.0;
-    guess_2=1.0/306.7;
+    //guess_1=311.0;
+    //guess_2=1.0/306.7;
+    /* case 5 Lettieri 8.4 MPa - 312 K */
+    //guess_1=312.0;
+    //guess_2=1.0/364.3;
     /* OP7 9 MPa - 315 K */
     //guess_1=315.0;
     //guess_2=1.0/408.4;
@@ -426,6 +429,9 @@ void CSWTable::SetTDState_Ps(su2double P, su2double s) {
     /* OP10 9 MPa - 311 K */
     //guess_1=311.0;
     //guess_2=1.0/581.5;
+    /* OP11 9 MPa - 313 K */
+    //guess_1=311.0; 
+    //guess_2=1.0/492.7;
     
     __non_linear_solvers_MOD_new_rap2d(&MODE, &T_out, &v_out, &resnorm, &Niter, &exitflag,&P, &s, &guess_1, &guess_2);
     if (Niter>=500 || T_out!=T_out || v_out!=v_out || v_out<=0.0 || T_out<=100.0){

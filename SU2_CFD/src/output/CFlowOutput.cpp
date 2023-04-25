@@ -249,6 +249,7 @@ void CFlowOutput::SetAnalyzeSurface(const CSolver* const*solver, const CGeometry
             TotalPressure     = Pressure + 0.5*Density*Velocity2;
           }
           else if (config->GetKind_FluidModel() == SW_TABLE){
+            Temperature       = flow_nodes->GetTemperature(iPoint);
             Enthalpy          = Get_h0(solver, iPoint); // Total enthalpy !!
 	    int choice = 1;
             TotalTemperature  = Get_p0_T0(solver, iPoint, choice);

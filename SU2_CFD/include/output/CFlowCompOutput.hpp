@@ -172,12 +172,13 @@ public:
       for (unsigned short jDim = 0 ; jDim < nDim; jDim++)
         Grad_Temp[iDim][jDim] = TemperatureGradient[iDim][jDim];
    
-    if( Node_Flow->GetSpecificHeatCp(iPoint) > 0.0 && Node_Flow->GetSpecificHeatCp(iPoint) < 3.0e4 ){
+    if( Node_Flow->GetSpecificHeatCp(iPoint) > 0.0 ){ // && Node_Flow->GetSpecificHeatCp(iPoint) < 3.0e4 ){
       lambda_turb = Node_Flow->GetEddyViscosity(iPoint) * Node_Flow->GetSpecificHeatCp(iPoint) / config->GetPrandtl_Turb();
     }
     else{
-      cout << "cp out of range for computing turbulent thermal conductivity: cp = " << Node_Flow->GetSpecificHeatCp(iPoint) << " J/kg/K"  << endl;
+      cout << "cp negative for computing turbulent thermal conductivity: cp = " << Node_Flow->GetSpecificHeatCp(iPoint) << " J/kg/K"  << endl;
       cout << "Turbulent thermal conductivity: lambda_turb = " << lambda_turb << " W/m/K"  << endl;
+      cout << "Values close to 0 for SIT may not be correct..."  << endl;
     }
 
     // Entropy production rate by SIT (Kock and Herwig, 2004-2006)
@@ -241,13 +242,14 @@ public:
 
     hh=Get_h0(solver, iPoint)-Eref_SW;
   
-    guess_1 = Node_Flow->GetTemperature(iPoint);//+Node_Flow->GetVelocity2(iPoint)/2.0/6000.0;
+    guess_1 = Node_Flow->GetTemperature(iPoint);//+Node_Flow->GetVelocity2(iPoint)/2.0/19000.0;
     guess_2 = 1/Node_Flow->GetSolution(iPoint, 0);
 
     __non_linear_solvers_MOD_new_rap2d(&MODE, &T_out, &v_out, &resnorm, &Niter, &exitflag,&hh, &ss, &guess_1, &guess_2);
     if (Niter>=500 || T_out!=T_out || v_out!=v_out || v_out<=0.0 || T_out<=100.0){
     for(int i=1;i<20; i++){
-      guess_2=guess_2/1.1;
+      guess_2=guess_2*1.001;
+      guess_1=guess_1*1.001;
       __non_linear_solvers_MOD_new_rap2d(&MODE, &T_out, &v_out, &resnorm, &Niter, &exitflag,&hh, &ss, &guess_1, &guess_2);
       if (Niter<500 & T_out==T_out & v_out==v_out & v_out>0.0 & T_out>100.0){
           break;
