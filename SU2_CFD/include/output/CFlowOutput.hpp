@@ -419,6 +419,39 @@ protected:
 
   }
 
+  /*!
+   * \brief Compute static pressure or static temperature of the flow depending on choice value
+   * \return Value of pstat or Tstat at the node.
+   */
+/*  su2double Get_pstat_Tstat(const CSolver* const*solver, unsigned long iPoint, int choice) const {
+    
+    const auto* Node_Flow = solver[FLOW_SOL]->GetNodes();
+    
+    int Niter, flag;
+    double pp, TT, cc, x_out, a_out, dummy;
+    double Eref_SW=506779.92063833564;
+    
+    su2double T_out, v_out, energy, hh;
+    su2double vv = 1.0/Node_Flow->GetSolution(iPoint, 0);
+    su2double ee;
+    if (nDim == 3){ ee = Node_Flow->GetSolution(iPoint, 4)*vv - Eref_SW - Node_Flow->GetVelocity2(iPoint)/2.0; // internal energy
+    } 
+    else { ee = Node_Flow->GetSolution(iPoint, 3)*vv - Eref_SW - Node_Flow->GetVelocity2(iPoint)/2.0;
+    }
+    
+    __interp_table_MOD_co2bllt_equi(&pp,&TT,&cc,&x_out,&a_out,&dummy,&ee,&vv,&flag);
+
+    if (choice == 0){ return pp;
+    }
+    else if (choice == 1){ return TT;
+    }
+    else { 
+      cout << "Check the choice int value in CFlowOutput.cpp to output pstat and Tstat field values..." << endl;
+      return 0.0;
+    }
+
+  }*/
+
 /**********************/
 
   /*!

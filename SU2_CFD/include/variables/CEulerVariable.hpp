@@ -233,7 +233,6 @@ class CEulerVariable : public CFlowVariable {
   }
 
   /*!
-  /*!
    * \brief Get the velocity of the flow.
    * \param[in] iDim - Index of the dimension.
    * \return Value of the velocity for the dimension <i>iDim</i>.

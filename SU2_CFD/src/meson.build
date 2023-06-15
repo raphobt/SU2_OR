@@ -199,7 +199,7 @@ if get_option('enable-normal')
 		               cpp_args:  [default_warning_flags, su2_cpp_args])
   su2_cfd_dep = declare_dependency(link_with: su2_cfd_lib,
                                    include_directories: su2_cfd_include)
-  su2_cfd = executable('SU2_CFD_q',
+  su2_cfd = executable('SU2_CFD',
                        'SU2_CFD.cpp',
                        install : true,
                        dependencies : [su2_cfd_dep, su2_deps, common_dep],
@@ -214,7 +214,7 @@ if get_option('enable-autodiff')
                                cpp_args: [default_warning_flags, su2_cpp_args, codi_rev_args])
   su2_cfd_dep_ad = declare_dependency(link_with: su2_cfd_lib_ad,
                                    include_directories: su2_cfd_include)
-  su2_cfd_ad = executable('SU2_CFD_AD_q',
+  su2_cfd_ad = executable('SU2_CFD_AD',
                           'SU2_CFD.cpp',
                           install : true,
                           dependencies : [su2_cfd_dep_ad, su2_deps, codi_dep, commonAD_dep],
@@ -229,7 +229,7 @@ if get_option('enable-directdiff')
                                cpp_args: [default_warning_flags, su2_cpp_args, codi_for_args])
   su2_cfd_dep_dd = declare_dependency(link_with: su2_cfd_lib_dd,
                                    include_directories: su2_cfd_include)
-  su2_cfd_dd = executable('SU2_CFD_DIRECTDIFF_q',
+  su2_cfd_dd = executable('SU2_CFD_DIRECTDIFF',
                           'SU2_CFD.cpp',
                           install : true,
                           dependencies : [su2_cfd_dep_dd, su2_deps, codi_dep, commonDD_dep],

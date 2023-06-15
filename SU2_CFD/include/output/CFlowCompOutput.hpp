@@ -173,7 +173,8 @@ public:
         Grad_Temp[iDim][jDim] = TemperatureGradient[iDim][jDim];
    
     if( Node_Flow->GetSpecificHeatCp(iPoint) > 0.0 ){ // && Node_Flow->GetSpecificHeatCp(iPoint) < 3.0e4 ){
-      lambda_turb = Node_Flow->GetEddyViscosity(iPoint) * Node_Flow->GetSpecificHeatCp(iPoint) / config->GetPrandtl_Turb();
+      //lambda_turb = Node_Flow->GetEddyViscosity(iPoint) * Node_Flow->GetSpecificHeatCp(iPoint) / config->GetPrandtl_Turb();
+      lambda_turb = Node_Flow->GetEddyViscosity(iPoint) * Node_Flow->GetSpecificHeatCp(iPoint) / 0.85;
     }
     else{
       cout << "cp negative for computing turbulent thermal conductivity: cp = " << Node_Flow->GetSpecificHeatCp(iPoint) << " J/kg/K"  << endl;
