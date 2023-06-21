@@ -322,6 +322,32 @@ protected:
 /**********************/
 
   /*!
+   * \brief Compute entropy production integral over the vortex tube volume 
+   * \return Single value of entropy production for whole domain [W]
+   */
+  su2double Get_SgenIntegral(const CSolver* const*solver, unsigned long iPoint) const {
+    
+    const auto* Node_Flow = solver[FLOW_SOL]->GetNodes();
+    
+    int flag;
+    double pp, TT, cc, x_out, a_out, dummy;
+    double Eref_SW=506779.92063833564;
+    su2double vv = 1.0/Node_Flow->GetSolution(iPoint, 0);
+    su2double ee;
+    if (nDim == 3){
+    ee = Node_Flow->GetSolution(iPoint, 4)*vv - Eref_SW - Node_Flow->GetVelocity2(iPoint)/2.0; // internal energy
+    } else {
+    ee = Node_Flow->GetSolution(iPoint, 3)*vv - Eref_SW - Node_Flow->GetVelocity2(iPoint)/2.0;
+    }
+    __interp_table_MOD_co2bllt_equi(&pp,&TT,&cc,&x_out,&a_out,&dummy,&ee,&vv,&flag);
+
+    // specific total enthalpy (based on total energy) 
+    su2double h0=Node_Flow->GetSolution(iPoint, 4)*vv+pp*vv;
+
+    return h0;
+  }
+
+  /*!
    * \brief Compute total enthalpy, total pressure and total temperature of the flow 
    * \return Value of h0 at the node.
    */

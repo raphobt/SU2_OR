@@ -288,6 +288,59 @@ public:
 
   }
 
+  /*!
+   * \brief Output the mean rate of strain tensor and its components
+   * \return Value of SmeanModulus and components at the node
+   */
+  template<class T>
+  su2double Get_SmeanModulus(const T& VelocityGradient, CSolver **solver, int choiceS) const {
+    
+    const auto* Node_Flow = solver[FLOW_SOL]->GetNodes();
+
+    // Make a 3D copy of the gradient so we do not have worry about nDim
+
+    su2double Grad_Vel[3][3] = {{0.0}};
+
+    for (unsigned short iDim = 0; iDim < nDim; iDim++)
+      for (unsigned short jDim = 0 ; jDim < nDim; jDim++)
+        Grad_Vel[iDim][jDim] = VelocityGradient[iDim][jDim];
+
+    // Definition of the modulus of the mean rate of strain tensor Smean
+  /*  su2double SmeanModulus = pow(2 * ( pow(Grad_Vel[0][0], 2) + pow(Grad_Vel[1][1], 2) + pow(Grad_Vel[2][2], 2) ) \
+    + pow(Grad_Vel[0][1] + Grad_Vel[1][0], 2) \
+    + pow(Grad_Vel[0][2] + Grad_Vel[2][0], 2) \
+    + pow(Grad_Vel[1][2] + Grad_Vel[2][1], 2), 0.5);*/
+
+    su2double duxdx2 = Grad_Vel[0][0] * Grad_Vel[0][0];
+    su2double duydy2 = Grad_Vel[1][1] * Grad_Vel[1][1];
+    su2double duzdz2 = Grad_Vel[2][2] * Grad_Vel[2][2];
+    su2double duxdy_duydx2 = (Grad_Vel[0][1] + Grad_Vel[1][0]) * (Grad_Vel[0][1] + Grad_Vel[1][0]); 
+    su2double duxdz_duzdx2 = (Grad_Vel[0][2] + Grad_Vel[2][0]) * (Grad_Vel[0][2] + Grad_Vel[2][0]); 
+    su2double duydz_duzdy2 = (Grad_Vel[1][2] + Grad_Vel[2][1]) * (Grad_Vel[1][2] + Grad_Vel[2][1]); 
+
+    su2double SmeanModulus = pow(2 * (duxdx2 + duydy2 + duzdz2) + duxdy_duydx2 + duxdz_duzdx2 + duydz_duzdy2, 0.5);    
+
+    if (choiceS == 0){ return SmeanModulus;
+    }
+    else if (choiceS == 1){ return duxdx2; 
+    }
+    else if (choiceS == 2){ return duydy2; 
+    }
+    else if (choiceS == 3){ return duzdz2; 
+    }
+    else if (choiceS == 4){ return duxdy_duydx2; 
+    }
+    else if (choiceS == 5){ return duxdz_duzdx2; 
+    }
+    else if (choiceS == 6){ return duydz_duzdy2; 
+    }
+    else { 
+      cout << "Check the choiceS int value in CFlowCompOutput.cpp to output SmeanModulus and component values..."<< endl;
+      return 0.0;
+    }
+
+  }
+
 /**********************/
 
   /*!
