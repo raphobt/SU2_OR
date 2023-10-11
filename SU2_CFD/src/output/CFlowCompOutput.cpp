@@ -249,12 +249,16 @@ void CFlowCompOutput::SetVolumeOutputFields(CConfig *config){
   //AddVolumeOutput("ENTHALPY",     "Enthalpy",                   "PRIMITIVE", "Specific enthalpy");
   AddVolumeOutput("TOTAL_ENTHALPY", "Total_enthalpy",             "PRIMITIVE", "Specific total enthalpy");
   AddVolumeOutput("SOUND_SPEED",    "Sound_speed",                "PRIMITIVE", "Sound speed");
+  AddVolumeOutput("SDD_compressible",    "SDD_compressible",      "PRIMITIVE", "Entropy production rate by direct dissipation (mean flow)");
   AddVolumeOutput("SDD",    "SDD",                                "PRIMITIVE", "Entropy production rate by direct dissipation (mean flow)");
   AddVolumeOutput("SID",    "SID",                                "PRIMITIVE", "Entropy production rate by indirect dissipation (turbulent or fluctuating flow)");
   AddVolumeOutput("SDT",    "SDT",                                "PRIMITIVE", "Entropy production rate by mean flow temperature gradients");
   AddVolumeOutput("SIT",    "SIT",                                "PRIMITIVE", "Entropy production rate by turbulent or fluctuating flow temperature gradients)");
+  AddVolumeOutput("ENTROPY_PROD_RATE_compressible",    "Entropy_prod_rate_compressible",    "PRIMITIVE", "Entropy production rate (global) [W/kg]");
   AddVolumeOutput("ENTROPY_PROD_RATE",    "Entropy_prod_rate",    "PRIMITIVE", "Entropy production rate (global) [W/kg]");
+  AddVolumeOutput("BEJAN_compressible",  "Bejan_number_compressible",                       "PRIMITIVE", "Bejan number (SDT+SIT)/(SDD+SID+SDT+SIT)");
   AddVolumeOutput("BEJAN",  "Bejan_number",                       "PRIMITIVE", "Bejan number (SDT+SIT)/(SDD+SID+SDT+SIT)");
+  AddVolumeOutput("ENTROPY_PROD_compressible",  "Entropy_prod_compressible",                "PRIMITIVE", "Entropy production rate integrated over the cell volume (mass because multiplied by rho) [W]. Cell values must be summed then divided by the VT volume (Integratevariable/VT_volume)");
   AddVolumeOutput("ENTROPY_PROD",  "Entropy_prod",                "PRIMITIVE", "Entropy production rate integrated over the cell volume (mass because multiplied by rho) [W]. Cell values must be summed then divided by the VT volume (Integratevariable/VT_volume)");
   AddVolumeOutput("S_MEAN_MODULUS",  "S_mean_modulus",            "PRIMITIVE", "Modulus of the mean rate of strain tensor");
   AddVolumeOutput("duxdx2",  "duxdx2",                            "PRIMITIVE", "duxdx2 component of the SmeanModulus");
@@ -263,6 +267,10 @@ void CFlowCompOutput::SetVolumeOutputFields(CConfig *config){
   AddVolumeOutput("duxdy_duydx2",  "duxdy_duydx2",                "PRIMITIVE", "duxdy_duydx2 component of the SmeanModulus");
   AddVolumeOutput("duxdz_duzdx2",  "duxdz_duzdx2",                "PRIMITIVE", "duxdz_duzdx2 component of the SmeanModulus");
   AddVolumeOutput("duydz_duzdy2",  "duydz_duzdy2",                "PRIMITIVE", "duydz_duzdy2 component of the SmeanModulus");
+  AddVolumeOutput("GRAD_T_MODULUS",  "gradTmodulus",              "PRIMITIVE", "Modulus of the temperature gradient");
+  AddVolumeOutput("dTdx2",  "dTdx2",                              "PRIMITIVE", "dTdx2 component of the temperature gradient");
+  AddVolumeOutput("dTdy2",  "dTdy2",                              "PRIMITIVE", "dTdy2 component of the temperature gradient");
+  AddVolumeOutput("dTdz2",  "dTdz2",                              "PRIMITIVE", "dTdz2 component of the temperature gradient");
 
   /* ---- */
   
@@ -386,7 +394,7 @@ void CFlowCompOutput::LoadVolumeData(CConfig *config, CGeometry *geometry, CSolv
 
   // specific total enthalpy (based on total energy)
   SetVolumeOutputValue("TOTAL_ENTHALPY", iPoint, Get_h0(solver, iPoint));
-
+/*
   // total pressure
   int choice = 0;
   SetVolumeOutputValue("TOTAL_PRESSURE", iPoint, Get_p0_T0(solver, iPoint, choice));
@@ -394,8 +402,9 @@ void CFlowCompOutput::LoadVolumeData(CConfig *config, CGeometry *geometry, CSolv
   // total temperature
   choice = 1;
   SetVolumeOutputValue("TOTAL_TEMPERATURE", iPoint, Get_p0_T0(solver, iPoint, choice));
-
+*/
   // entropy production terms
+  SetVolumeOutputValue("SDD_compressible", iPoint, Get_SDD_compressible(Node_Flow->GetVelocityGradient(iPoint), solver, iPoint));
   SetVolumeOutputValue("SDD", iPoint, Get_SDD(Node_Flow->GetVelocityGradient(iPoint), solver, iPoint));
   SetVolumeOutputValue("SID", iPoint, Get_SID(solver, iPoint, config));
   SetVolumeOutputValue("SDT", iPoint, Get_SDT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint));
@@ -407,15 +416,29 @@ void CFlowCompOutput::LoadVolumeData(CConfig *config, CGeometry *geometry, CSolv
                                                   + Get_SDT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint) \
                                                   + Get_SIT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint, config, geometry)  ));*/
 
+  su2double SgenRate_compressible = Node_Flow->GetTemperature(iPoint) / Node_Flow->GetSolution(iPoint, 0) * \
+                                                           (  Get_SDD_compressible(Node_Flow->GetVelocityGradient(iPoint), solver, iPoint) \
+                                                            + Get_SID(solver, iPoint, config) \
+                                                            + Get_SDT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint) \
+                                                            + Get_SIT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint, config, geometry)  );
+
   su2double SgenRate = Node_Flow->GetTemperature(iPoint) / Node_Flow->GetSolution(iPoint, 0) * \
                                                            (  Get_SDD(Node_Flow->GetVelocityGradient(iPoint), solver, iPoint) \
                                                             + Get_SID(solver, iPoint, config) \
                                                             + Get_SDT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint) \
                                                             + Get_SIT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint, config, geometry)  );
 
+  SetVolumeOutputValue("ENTROPY_PROD_RATE_compressible", iPoint, SgenRate_compressible); 
   SetVolumeOutputValue("ENTROPY_PROD_RATE", iPoint, SgenRate); 
 
   // Bejan number
+  SetVolumeOutputValue("BEJAN_compressible", iPoint, (  Get_SDT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint) \
+                                         + Get_SIT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint, config, geometry) ) \
+                                           / (  Get_SDD_compressible(Node_Flow->GetVelocityGradient(iPoint), solver, iPoint) \
+                                              + Get_SID(solver, iPoint, config) \
+                                              + Get_SDT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint) \
+                                              + Get_SIT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint, config, geometry) ) );
+
   SetVolumeOutputValue("BEJAN", iPoint, (  Get_SDT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint) \
                                          + Get_SIT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint, config, geometry) ) \
                                            / (  Get_SDD(Node_Flow->GetVelocityGradient(iPoint), solver, iPoint) \
@@ -423,6 +446,7 @@ void CFlowCompOutput::LoadVolumeData(CConfig *config, CGeometry *geometry, CSolv
                                               + Get_SDT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint) \
                                               + Get_SIT(Node_Flow->GetTemperatureGradient(iPoint), solver, iPoint, config, geometry) ) );
 
+  SetVolumeOutputValue("ENTROPY_PROD_compressible", iPoint, Node_Flow->GetSolution(iPoint, 0) * SgenRate_compressible * Node_Geo->GetVolume(iPoint));
   SetVolumeOutputValue("ENTROPY_PROD", iPoint, Node_Flow->GetSolution(iPoint, 0) * SgenRate * Node_Geo->GetVolume(iPoint));
 
   int choiceS = 0;
@@ -440,6 +464,15 @@ void CFlowCompOutput::LoadVolumeData(CConfig *config, CGeometry *geometry, CSolv
   choiceS = 6;
   SetVolumeOutputValue("duydz_duzdy2", iPoint, Get_SmeanModulus(Node_Flow->GetVelocityGradient(iPoint), solver, choiceS)); 
   
+  int choiceT = 0;
+  SetVolumeOutputValue("GRAD_T_MODULUS", iPoint, Get_gradTmodulus(Node_Flow->GetTemperatureGradient(iPoint), solver, choiceT)); 
+  choiceT = 1;
+  SetVolumeOutputValue("dTdx2", iPoint, Get_gradTmodulus(Node_Flow->GetTemperatureGradient(iPoint), solver, choiceT)); 
+  choiceT = 2;
+  SetVolumeOutputValue("dTdy2", iPoint, Get_gradTmodulus(Node_Flow->GetTemperatureGradient(iPoint), solver, choiceT)); 
+  choiceT = 3;
+  SetVolumeOutputValue("dTdz2", iPoint, Get_gradTmodulus(Node_Flow->GetTemperatureGradient(iPoint), solver, choiceT)); 
+
   /* ---- */
 
   const su2double factor = solver[FLOW_SOL]->GetReferenceDynamicPressure();

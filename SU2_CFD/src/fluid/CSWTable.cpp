@@ -260,6 +260,12 @@ void CSWTable::SetTDState_hs(su2double h, su2double s) {
     /* OP12 8 MPa - 307 K */
     //guess_1=307.0;
     //guess_2=1.0/560.2;
+    /* OP13 8 MPa - 315 K */
+    //guess_1=313.0;
+    //guess_2=1.0/261.3;
+    /* OP14 9 MPa - 270 K */
+    //guess_1=270.0;
+    //guess_2=1.0/809.3;
     
     __non_linear_solvers_MOD_new_rap2d(&MODE, &T_out, &v_out, &resnorm, &Niter, &exitflag,&hh, &ss, &guess_1, &guess_2);
     if (Niter>=500 || T_out!=T_out || v_out!=v_out || v_out<=0.0 || T_out<=100.0){
@@ -438,6 +444,12 @@ void CSWTable::SetTDState_Ps(su2double P, su2double s) {
     /* OP12 8 MPa - 307 K */
     //guess_1=307.0;
     //guess_2=1.0/560.2;
+    /* OP13 8 MPa - 315 K */
+    //guess_1=313.0;
+    //guess_2=1.0/261.3;
+    /* OP14 9 MPa - 270 K */
+    //guess_1=270.0;
+    //guess_2=1.0/809.3;
     
     __non_linear_solvers_MOD_new_rap2d(&MODE, &T_out, &v_out, &resnorm, &Niter, &exitflag,&P, &s, &guess_1, &guess_2);
     if (Niter>=500 || T_out!=T_out || v_out!=v_out || v_out<=0.0 || T_out<=100.0){

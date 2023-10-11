@@ -367,8 +367,8 @@ ENDIF
 !######### CHECK #########
 
 IF ( (cp_out /= cp_out) .OR. (cp_out < 0.0) .OR. (cp_out >1e6)) THEN
-   print*, 'Cp error',cp_out
-   print*, 'CO2 TRANSPROP, Tin= ', T_in,'p_in= ',p_in, 'vin= ',v_in, 'flag',flag_loca
+ !  print*, 'Cp error',cp_out
+ !  print*, 'CO2 TRANSPROP, Tin= ', T_in,'p_in= ',p_in, 'vin= ',v_in, 'flag',flag_loca
    cp_out = 0.0
 !     STOP
 ENDIF

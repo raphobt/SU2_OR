@@ -248,14 +248,14 @@ void CFlowOutput::SetAnalyzeSurface(const CSolver* const*solver, const CGeometry
             TotalTemperature  = Temperature + 0.5*Velocity2/flow_nodes->GetSpecificHeatCp(iPoint);
             TotalPressure     = Pressure + 0.5*Density*Velocity2;
           }
-          else if (config->GetKind_FluidModel() == SW_TABLE){
+     /*     else if (config->GetKind_FluidModel() == SW_TABLE){
             Temperature       = flow_nodes->GetTemperature(iPoint);
             Enthalpy          = Get_h0(solver, iPoint); // Total enthalpy !!
 	    int choice = 1;
             TotalTemperature  = Get_p0_T0(solver, iPoint, choice);
 	    choice = 0;
             TotalPressure     = Get_p0_T0(solver, iPoint, choice);
-          }
+          }*/
           else{
             Mach              = sqrt(Velocity2)/SoundSpeed;
             Temperature       = Pressure / (Gas_Constant * Density);

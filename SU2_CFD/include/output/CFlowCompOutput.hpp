@@ -78,6 +78,38 @@ public:
    * \return Value of SDD at the node
    */
   template<class T>
+  su2double Get_SDD_compressible(const T& VelocityGradient, CSolver **solver, unsigned long iPoint) const {
+    
+    const auto* Node_Flow = solver[FLOW_SOL]->GetNodes();
+
+    // Make a 3D copy of the gradient so we do not have worry about nDim
+
+    su2double Grad_Vel[3][3] = {{0.0}};
+
+    for (unsigned short iDim = 0; iDim < nDim; iDim++)
+      for (unsigned short jDim = 0 ; jDim < nDim; jDim++)
+        Grad_Vel[iDim][jDim] = VelocityGradient[iDim][jDim];
+
+    // Definition of the modulus of the mean rate of strain tensor Smean
+    su2double tauScaDoubleGradUTr = 2 * ( pow(Grad_Vel[0][0], 2) + pow(Grad_Vel[1][1], 2) + pow(Grad_Vel[2][2], 2) ) \
+    + pow(Grad_Vel[0][1] + Grad_Vel[1][0], 2) \
+    + pow(Grad_Vel[0][2] + Grad_Vel[2][0], 2) \
+    + pow(Grad_Vel[1][2] + Grad_Vel[2][1], 2) \
+    - 2/3 * pow(Grad_Vel[0][0] + Grad_Vel[1][1] + Grad_Vel[2][2], 2);
+
+    // Entropy production rate by direct dissipation SDD (Kock and Herwig, 2004-2006)
+    // SDD = molecular_visco / T * ||S||
+    
+    su2double SDD_compressible = Node_Flow->GetLaminarViscosity(iPoint) / Node_Flow->GetTemperature(iPoint) * tauScaDoubleGradUTr;
+    
+    return SDD_compressible;
+  }
+
+  /*!
+   * \brief Compute entropy generation rate by direct dissipation SDD
+   * \return Value of SDD at the node
+   */
+  template<class T>
   su2double Get_SDD(const T& VelocityGradient, CSolver **solver, unsigned long iPoint) const {
     
     const auto* Node_Flow = solver[FLOW_SOL]->GetNodes();
@@ -148,7 +180,7 @@ public:
     // Entropy production rate by SDT (Kock and Herwig, 2004-2006)
     // SDT =  ( thermal_cond / T*T ) * || grad(T) || ** 2 
     
-    su2double SDT = ( Node_Flow->GetThermalConductivity(iPoint) / Node_Flow->GetTemperature(iPoint) / Node_Flow->GetTemperature(iPoint) ) * ( Grad_Temp[0][0] * Grad_Temp[0][0] + Grad_Temp[1][0] * Grad_Temp[1][0] + Grad_Temp[2][0] * Grad_Temp[2][0] );
+    su2double SDT = ( Node_Flow->GetThermalConductivity(iPoint) / Node_Flow->GetTemperature(iPoint) / Node_Flow->GetTemperature(iPoint) ) * ( Grad_Temp[0][0] * Grad_Temp[0][0] + Grad_Temp[0][1] * Grad_Temp[0][1] + Grad_Temp[0][2] * Grad_Temp[0][2] );
     
     return SDT;
   }
@@ -176,16 +208,16 @@ public:
       //lambda_turb = Node_Flow->GetEddyViscosity(iPoint) * Node_Flow->GetSpecificHeatCp(iPoint) / config->GetPrandtl_Turb();
       lambda_turb = Node_Flow->GetEddyViscosity(iPoint) * Node_Flow->GetSpecificHeatCp(iPoint) / 0.85;
     }
-    else{
-      cout << "cp negative for computing turbulent thermal conductivity: cp = " << Node_Flow->GetSpecificHeatCp(iPoint) << " J/kg/K"  << endl;
-      cout << "Turbulent thermal conductivity: lambda_turb = " << lambda_turb << " W/m/K"  << endl;
-      cout << "Values close to 0 for SIT may not be correct..."  << endl;
-    }
+    //else{
+      //cout << "cp negative for computing turbulent thermal conductivity: cp = " << Node_Flow->GetSpecificHeatCp(iPoint) << " J/kg/K"  << endl;
+      //cout << "Turbulent thermal conductivity: lambda_turb = " << lambda_turb << " W/m/K"  << endl;
+      //cout << "Values close to 0 for SIT may not be correct..."  << endl;
+    //}
 
     // Entropy production rate by SIT (Kock and Herwig, 2004-2006)
     // SIT =  ( turb_thermal_cond / T*T ) * || grad(T) || ** 2 
     
-    su2double SIT = ( lambda_turb / Node_Flow->GetTemperature(iPoint) / Node_Flow->GetTemperature(iPoint) ) * ( Grad_Temp[0][0] * Grad_Temp[0][0] + Grad_Temp[1][0] * Grad_Temp[1][0] + Grad_Temp[2][0] * Grad_Temp[2][0] );
+    su2double SIT = ( lambda_turb / Node_Flow->GetTemperature(iPoint) / Node_Flow->GetTemperature(iPoint) ) * ( Grad_Temp[0][0] * Grad_Temp[0][0] + Grad_Temp[0][1] * Grad_Temp[0][1] + Grad_Temp[0][2] * Grad_Temp[0][2] );
     
     return SIT;
   }
@@ -341,6 +373,43 @@ public:
 
   }
 
+  /*!
+   * \brief Compute temperature gradient modulus and its components
+   * \return Value of temperature gradient modulus and components at the node.
+   */
+  template<class T>
+  su2double Get_gradTmodulus(const T& TemperatureGradient, CSolver **solver, int choiceT) const {
+    
+    const auto* Node_Flow = solver[FLOW_SOL]->GetNodes();
+    
+    // Make a 3D copy of the gradient so we do not have worry about nDim
+    su2double Grad_Temp[3][3] = {{0.0}};
+
+    for (unsigned short iDim = 0; iDim < nDim; iDim++)
+      for (unsigned short jDim = 0 ; jDim < nDim; jDim++)
+        Grad_Temp[iDim][jDim] = TemperatureGradient[iDim][jDim];
+ 
+    su2double dTdx2 = Grad_Temp[0][0]*Grad_Temp[0][0];
+    su2double dTdy2 = Grad_Temp[0][1]*Grad_Temp[0][1];
+    su2double dTdz2 = Grad_Temp[0][2]*Grad_Temp[0][2];
+ 
+    su2double gradTmodulus = pow(dTdx2 + dTdy2 + dTdz2, 0.5);
+    
+    if (choiceT == 0){ return gradTmodulus;
+    }
+    else if (choiceT == 1){ return dTdx2; 
+    }
+    else if (choiceT == 2){ return dTdy2; 
+    }
+    else if (choiceT == 3){ return dTdz2; 
+    }
+    else { 
+      cout << "Check the choiceT int value in CFlowCompOutput.cpp to output gradTmodulus and component values..."<< endl;
+      return 0.0;
+    }
+
+
+  }
 /**********************/
 
   /*!
