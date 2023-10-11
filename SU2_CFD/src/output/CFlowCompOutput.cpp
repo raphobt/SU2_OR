@@ -271,6 +271,9 @@ void CFlowCompOutput::SetVolumeOutputFields(CConfig *config){
   AddVolumeOutput("dTdx2",  "dTdx2",                              "PRIMITIVE", "dTdx2 component of the temperature gradient");
   AddVolumeOutput("dTdy2",  "dTdy2",                              "PRIMITIVE", "dTdy2 component of the temperature gradient");
   AddVolumeOutput("dTdz2",  "dTdz2",                              "PRIMITIVE", "dTdz2 component of the temperature gradient");
+  AddVolumeOutput("SWIRL_NUMBER_AFTM",  "swirl_number_AFTM",      "PRIMITIVE", "swirl number numerator");
+  AddVolumeOutput("SWIRL_NUMBER_AFAM",  "swirl_number_AFAM",      "PRIMITIVE", "swirl number denominator");
+  AddVolumeOutput("SWIRL_NUMBER",  "swirl_number",                "PRIMITIVE", "swirl number");
 
   /* ---- */
   
@@ -403,6 +406,16 @@ void CFlowCompOutput::LoadVolumeData(CConfig *config, CGeometry *geometry, CSolv
   choice = 1;
   SetVolumeOutputValue("TOTAL_TEMPERATURE", iPoint, Get_p0_T0(solver, iPoint, choice));
 */
+
+  // swirl number
+  int choiceSN = 0; // AFTM
+  SetVolumeOutputValue("SWIRL_NUMBER_AFTM", iPoint, Get_SN_components(solver, iPoint, geometry, choiceSN));
+  choiceSN = 1; // AFAM
+  SetVolumeOutputValue("SWIRL_NUMBER_AFAM", iPoint, Get_SN_components(solver, iPoint, geometry, choiceSN));
+
+  SetVolumeOutputValue("SWIRL_NUMBER", iPoint, Get_SN_components(solver, iPoint, geometry, choiceSN = 0) / Get_SN_components(solver, iPoint, geometry, choiceSN = 1));
+
+
   // entropy production terms
   SetVolumeOutputValue("SDD_compressible", iPoint, Get_SDD_compressible(Node_Flow->GetVelocityGradient(iPoint), solver, iPoint));
   SetVolumeOutputValue("SDD", iPoint, Get_SDD(Node_Flow->GetVelocityGradient(iPoint), solver, iPoint));

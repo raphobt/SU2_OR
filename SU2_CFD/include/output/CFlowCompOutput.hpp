@@ -74,6 +74,37 @@ public:
 /**********************/
 
   /*!
+   * \brief Compute components of the swirl number SN: Axial Flux of Tangential Momentum (AFTM)
+   * and Axial Flux of Axial Momentum (AFAM)
+   * \return Value at the node
+   */
+  su2double Get_SN_components(CSolver **solver, unsigned long iPoint, CGeometry *geometry, int choiceSN) const {
+    
+    const auto* Node_Flow = solver[FLOW_SOL]->GetNodes();
+
+    su2double RHVT_radius = 0.003135; // Zhu RHVT radius
+    su2double *coord = geometry->nodes->GetCoord(iPoint);
+    su2double radius = pow(coord[1]*coord[1] + coord[2]*coord[2], 0.5);
+
+    su2double ux = Node_Flow->GetSolution(iPoint, 1)/Node_Flow->GetSolution(iPoint, 0); // rhoUx/rho
+    su2double uy = Node_Flow->GetSolution(iPoint, 2)/Node_Flow->GetSolution(iPoint, 0);
+    su2double uz = Node_Flow->GetSolution(iPoint, 3)/Node_Flow->GetSolution(iPoint, 0);
+    su2double utheta = pow(uy*uy + uz*uz, 0.5);
+
+    su2double AFTM = abs(Node_Flow->GetSolution(iPoint, 0) * ux * utheta * radius * radius);
+    su2double AFAM = abs(RHVT_radius * Node_Flow->GetSolution(iPoint, 0) * ( ux * ux - 0.5 * utheta * utheta ) * radius);
+
+    if (choiceSN == 0){ return AFTM;
+    }
+    else if (choiceSN == 1){ return AFAM; 
+    }
+    else { 
+      cout << "Check the choiceSN int value in CFlowCompOutput.cpp to output swirl number component values..."<< endl;
+      return 0.0;
+    }
+  }
+
+  /*!
    * \brief Compute entropy generation rate by direct dissipation SDD
    * \return Value of SDD at the node
    */
