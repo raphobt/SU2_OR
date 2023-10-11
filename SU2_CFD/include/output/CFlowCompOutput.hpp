@@ -92,7 +92,8 @@ public:
     su2double utheta = pow(uy*uy + uz*uz, 0.5);
 
     su2double AFTM = abs(Node_Flow->GetSolution(iPoint, 0) * ux * utheta * radius * radius);
-    su2double AFAM = abs(RHVT_radius * Node_Flow->GetSolution(iPoint, 0) * ( ux * ux - 0.5 * utheta * utheta ) * radius);
+    //su2double AFAM = abs(RHVT_radius * Node_Flow->GetSolution(iPoint, 0) * ( ux * ux - 0.5 * utheta * utheta ) * radius);
+    su2double AFAM = abs(RHVT_radius * Node_Flow->GetSolution(iPoint, 0) * ( ux * ux ) * radius);
 
     if (choiceSN == 0){ return AFTM;
     }
